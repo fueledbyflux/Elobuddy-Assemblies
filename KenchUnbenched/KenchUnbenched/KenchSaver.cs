@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Constants;
@@ -35,7 +33,7 @@ namespace KenchUnbenched
         }
     }
 
-    class KenchSaver
+    internal static class KenchSaver
     {
         private static Spell.Targeted W
         {
@@ -59,18 +57,17 @@ namespace KenchUnbenched
             }
         }
 
-        public static List<SaveUnit> UnitsToSave = new List<SaveUnit>(); 
+        private static List<SaveUnit> UnitsToSave = new List<SaveUnit>(); 
             
 
         private static void OnUpdate(EventArgs args)
         {
             if (KenchUnbenched.SaveMenu["enableSaving"].Cast<CheckBox>().CurrentValue && W.IsReady())
             {
-                foreach (var saveUnit in UnitsToSave.Where(a => a.IsEnabled && a.Unit.Distance(Player.Instance) < 300))
+                foreach (var saveUnit in UnitsToSave.Where(a => a.IsEnabled && a.Unit.Distance(Player.Instance) < 300).Where(saveUnit => saveUnit.Unit.HealthPercent <= 10 && saveUnit.Unit.CountEnemiesInRange(800) > 0 ||
+                                                                                                                                         saveUnit.IncomingDamage > saveUnit.Unit.Health))
                 {
-                    if (saveUnit.Unit.HealthPercent <= 10 && saveUnit.Unit.CountEnemiesInRange(800) > 0 ||
-                        saveUnit.IncomingDamage > saveUnit.Unit.Health)
-                        Player.CastSpell(SpellSlot.W, saveUnit.Unit);
+                    Player.CastSpell(SpellSlot.W, saveUnit.Unit);
                 }
             }
             foreach (var unit in UnitsToSave)
@@ -91,61 +88,81 @@ namespace KenchUnbenched
 
         private static void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (sender.IsEnemy)
+            if (!sender.IsEnemy) return;
+            foreach (var saveUnit in UnitsToSave.Where(a => a.IsEnabled).Where(saveUnit => saveUnit.Unit != null && KenchUnbenched.SaveMenu["enableSaving"].Cast<CheckBox>().CurrentValue))
             {
-                foreach (var saveUnit in UnitsToSave.Where(a => a.IsEnabled))
+                // Auto attacks
+                if ((!(sender is AIHeroClient) || args.SData.IsAutoAttack()) && args.Target != null &&
+                    args.Target.NetworkId == saveUnit.Unit.NetworkId)
                 {
-                    // Calculations to save your souldbound
-                    if (saveUnit.Unit != null && KenchUnbenched.SaveMenu["enableSaving"].Cast<CheckBox>().CurrentValue)
+                    // Calculate arrival time and damage
+                    saveUnit.IncDamage[
+                        saveUnit.Unit.ServerPosition.Distance(sender.ServerPosition)/args.SData.MissileSpeed +
+                        Game.Time] = sender.GetAutoAttackDamage(saveUnit.Unit);
+                }
+                // Sender is a hero
+                else
+                {
+                    var attacker = sender as AIHeroClient;
+                    if (attacker == null) continue;
+                    var slot = attacker.GetSpellSlotFromName(args.SData.Name);
+
+                    if (slot == SpellSlot.Unknown) continue;
+                    if (slot == attacker.GetSpellSlotFromName("SummonerDot") && args.Target != null &&
+                        args.Target.NetworkId == saveUnit.Unit.NetworkId)
                     {
-                        // Auto attacks
-                        if ((!(sender is AIHeroClient) || args.SData.IsAutoAttack()) && args.Target != null &&
-                            args.Target.NetworkId == saveUnit.Unit.NetworkId)
+                        // Ingite damage (dangerous)
+                        saveUnit.InstDamage[Game.Time + 2] = attacker.GetSummonerSpellDamage(saveUnit.Unit,
+                            DamageLibrary.SummonerSpells.Ignite);
+                    }
+                    else
+                    {
+                        switch (slot)
                         {
-                            // Calculate arrival time and damage
-                            saveUnit.IncDamage[
-                                saveUnit.Unit.ServerPosition.Distance(sender.ServerPosition)/args.SData.MissileSpeed +
-                                Game.Time] = sender.GetAutoAttackDamage(saveUnit.Unit);
-                        }
-                        // Sender is a hero
-                        else
-                        {
-                            var attacker = sender as AIHeroClient;
-                            if (attacker != null)
-                            {
-                                var slot = attacker.GetSpellSlotFromName(args.SData.Name);
+                            case SpellSlot.Q:
+                            case SpellSlot.W:
+                            case SpellSlot.E:
+                            case SpellSlot.R:
 
-                                if (slot != SpellSlot.Unknown)
+                                if ((args.Target != null && args.Target.NetworkId == saveUnit.Unit.NetworkId) ||
+                                    args.End.Distance(saveUnit.Unit.ServerPosition) <
+                                    Math.Pow(args.SData.LineWidth, 2))
                                 {
-                                    if (slot == attacker.GetSpellSlotFromName("SummonerDot") && args.Target != null &&
-                                        args.Target.NetworkId == saveUnit.Unit.NetworkId)
-                                    {
-                                        // Ingite damage (dangerous)
-                                        saveUnit.InstDamage[Game.Time + 2] = attacker.GetSummonerSpellDamage(saveUnit.Unit,
-                                            DamageLibrary.SummonerSpells.Ignite);
-                                    }
-                                    else
-                                    {
-                                        switch (slot)
-                                        {
-                                            case SpellSlot.Q:
-                                            case SpellSlot.W:
-                                            case SpellSlot.E:
-                                            case SpellSlot.R:
-
-                                                if ((args.Target != null && args.Target.NetworkId == saveUnit.Unit.NetworkId) ||
-                                                    args.End.Distance(saveUnit.Unit.ServerPosition) <
-                                                    Math.Pow(args.SData.LineWidth, 2))
-                                                {
-                                                    // Instant damage to target
-                                                    saveUnit.InstDamage[Game.Time + 2] = attacker.GetSpellDamage(saveUnit.Unit, slot);
-                                                }
-
-                                                break;
-                                        }
-                                    }
+                                    // Instant damage to target
+                                    saveUnit.InstDamage[Game.Time + 2] = attacker.GetSpellDamage(saveUnit.Unit, slot);
                                 }
-                            }
+
+                                break;
+                            case SpellSlot.Unknown:
+                                break;
+                            case SpellSlot.Summoner1:
+                                break;
+                            case SpellSlot.Summoner2:
+                                break;
+                            case SpellSlot.Item1:
+                                break;
+                            case SpellSlot.Item2:
+                                break;
+                            case SpellSlot.Item3:
+                                break;
+                            case SpellSlot.Item4:
+                                break;
+                            case SpellSlot.Item5:
+                                break;
+                            case SpellSlot.Item6:
+                                break;
+                            case SpellSlot.Trinket:
+                                break;
+                            case SpellSlot.Recall:
+                                break;
+                            case SpellSlot.OathSworn:
+                                break;
+                            case SpellSlot.CapturePoint:
+                                break;
+                            case SpellSlot.Internal:
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
                         }
                     }
                 }

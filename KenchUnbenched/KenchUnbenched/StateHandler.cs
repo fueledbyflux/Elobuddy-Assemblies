@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -11,7 +6,7 @@ using EloBuddy.SDK.Menu.Values;
 
 namespace KenchUnbenched
 {
-    class StateHandler
+    internal static class StateHandler
     {
         public static void Combo()
         {
@@ -28,25 +23,20 @@ namespace KenchUnbenched
                 KenchUnbenched.WSpellSwallow.Cast(target);
             }
 
-            if (KenchUnbenched.ComboMenu["Combo.W.Minion"].Cast<CheckBox>().CurrentValue)
+            if (!KenchUnbenched.ComboMenu["Combo.W.Minion"].Cast<CheckBox>().CurrentValue) return;
+            if (KenchUnbenched.WSpellSpit.GetPrediction(target).HitChance >= HitChance.Medium)
             {
-                if (KenchUnbenched.WSpellSpit.GetPrediction(target).HitChance >= HitChance.Medium)
+                foreach (var minion in EntityManager.MinionsAndMonsters.EnemyMinions.Where(minion => minion.Distance(Player.Instance) < KenchUnbenched.WSpellSwallow.Range))
                 {
-                    foreach (var minion in EntityManager.MinionsAndMonsters.EnemyMinions)
-                    {
-                        if (minion.Distance(Player.Instance) < KenchUnbenched.WSpellSwallow.Range)
-                        {
-                            KenchUnbenched.WSpellSwallow.Cast(minion);
-                            break;
-                        }
-                    }
+                    KenchUnbenched.WSpellSwallow.Cast(minion);
+                    break;
                 }
+            }
 
-                if (KenchCheckManager.IsSwallowed() && KenchCheckManager.WTarget != null &&
-                    KenchCheckManager.WTarget.IsMinion)
-                {
-                    KenchUnbenched.WSpellSpit.Cast(target);
-                }
+            if (KenchCheckManager.IsSwallowed() && KenchCheckManager.WTarget != null &&
+                KenchCheckManager.WTarget.IsMinion)
+            {
+                KenchUnbenched.WSpellSpit.Cast(target);
             }
         }
 
@@ -65,61 +55,44 @@ namespace KenchUnbenched
                 KenchUnbenched.WSpellSwallow.Cast(target);
             }
 
-            if (KenchUnbenched.HarassMenu["Harass.W.Minion"].Cast<CheckBox>().CurrentValue)
+            if (!KenchUnbenched.HarassMenu["Harass.W.Minion"].Cast<CheckBox>().CurrentValue) return;
+            if (KenchUnbenched.WSpellSpit.GetPrediction(target).HitChance >= HitChance.Medium)
             {
-                if (KenchUnbenched.WSpellSpit.GetPrediction(target).HitChance >= HitChance.Medium)
+                foreach (var minion in EntityManager.MinionsAndMonsters.EnemyMinions.Where(minion => minion.Distance(Player.Instance) < KenchUnbenched.WSpellSwallow.Range))
                 {
-                    foreach (var minion in EntityManager.MinionsAndMonsters.EnemyMinions)
-                    {
-                        if (minion.Distance(Player.Instance) < KenchUnbenched.WSpellSwallow.Range)
-                        {
-                            KenchUnbenched.WSpellSwallow.Cast(minion);
-                            break;
-                        }
-                    }
+                    KenchUnbenched.WSpellSwallow.Cast(minion);
+                    break;
                 }
+            }
 
-                if (KenchCheckManager.IsSwallowed() && KenchCheckManager.WTarget != null &&
-                    KenchCheckManager.WTarget.IsMinion)
-                {
-                    KenchUnbenched.WSpellSpit.Cast(target);
-                }
+            if (KenchCheckManager.IsSwallowed() && KenchCheckManager.WTarget != null &&
+                KenchCheckManager.WTarget.IsMinion)
+            {
+                KenchUnbenched.WSpellSpit.Cast(target);
             }
         }
 
         public static void LastHit()
         {
-            if (KenchUnbenched.FarmingMenu["LastHit.Q"].Cast<CheckBox>().CurrentValue && KenchUnbenched.QSpell.IsReady())
+            if (!KenchUnbenched.FarmingMenu["LastHit.Q"].Cast<CheckBox>().CurrentValue ||
+                !KenchUnbenched.QSpell.IsReady()) return;
+            foreach (var enemies in EntityManager.MinionsAndMonsters.EnemyMinions.Where(
+                a => a.Distance(Player.Instance) <= 900 && a.Health <= TahmDamage.QDamage(a)).Where(enemies => KenchUnbenched.QSpell.GetPrediction(enemies).HitChance >= HitChance.Medium))
             {
-                foreach (
-                    var enemies in
-                        EntityManager.MinionsAndMonsters.EnemyMinions.Where(
-                            a => a.Distance(Player.Instance) <= 900 && a.Health <= TahmDamage.QDamage(a)))
-                {
-                    if (KenchUnbenched.QSpell.GetPrediction(enemies).HitChance >= HitChance.Medium)
-                    {
-                        KenchUnbenched.QSpell.Cast(enemies);
-                        break;
-                    }
-                }
+                KenchUnbenched.QSpell.Cast(enemies);
+                break;
             }
         }
 
         public static void WaveClear()
         {
-            if (KenchUnbenched.FarmingMenu["WaveClear.Q"].Cast<CheckBox>().CurrentValue && KenchUnbenched.QSpell.IsReady())
+            if (!KenchUnbenched.FarmingMenu["WaveClear.Q"].Cast<CheckBox>().CurrentValue ||
+                !KenchUnbenched.QSpell.IsReady()) return;
+            foreach (var enemies in EntityManager.MinionsAndMonsters.EnemyMinions.Where(
+                a => a.Distance(Player.Instance) <= 900 && a.Health <= TahmDamage.QDamage(a)).Where(enemies => KenchUnbenched.QSpell.GetPrediction(enemies).HitChance >= HitChance.Medium))
             {
-                foreach (
-                    var enemies in
-                        EntityManager.MinionsAndMonsters.EnemyMinions.Where(
-                            a => a.Distance(Player.Instance) <= 900 && a.Health <= TahmDamage.QDamage(a)))
-                {
-                    if (KenchUnbenched.QSpell.GetPrediction(enemies).HitChance >= HitChance.Medium)
-                    {
-                        KenchUnbenched.QSpell.Cast(enemies);
-                        break;
-                    }
-                }
+                KenchUnbenched.QSpell.Cast(enemies);
+                break;
             }
         }
 
@@ -158,21 +131,22 @@ namespace KenchUnbenched
                     KenchUnbenched.WSpellSpit.Cast(enemy);
                     return;
                 }
-                if(KenchUnbenched.WSpellSwallow.IsReady() && TahmDamage.WPDamage(enemy) > enemy.Health && (!pred.CollisionObjects.Any() || pred.CollisionObjects.Count() == 1 && pred.CollisionObjects[0].IsMinion && pred.CollisionObjects[0].Distance(Player.Instance) <= 250) && enemy.IsEmpowered() &&
-                    KenchUnbenched.KillStealMenu["KillSteal.W.Spit"].Cast<CheckBox>().CurrentValue)
+                if (!KenchUnbenched.WSpellSwallow.IsReady() || !(TahmDamage.WPDamage(enemy) > enemy.Health) ||
+                    (pred.CollisionObjects.Any() &&
+                     (pred.CollisionObjects.Length != 1 || !pred.CollisionObjects[0].IsMinion ||
+                      !(pred.CollisionObjects[0].Distance(Player.Instance) <= 250))) || !enemy.IsEmpowered() ||
+                    !KenchUnbenched.KillStealMenu["KillSteal.W.Spit"].Cast<CheckBox>().CurrentValue) continue;
+                if (pred.CollisionObjects.Length == 1 && pred.CollisionObjects[0].IsMinion)
                 {
-                    if (pred.CollisionObjects.Count() == 1 && pred.CollisionObjects[0].IsMinion)
-                    {
-                        KenchUnbenched.WSpellSwallow.Cast(pred.CollisionObjects[0]);
-                        return;
-                    }
-                    if (pred.CollisionObjects.Any()) continue;
-                    var unit =
-                        EntityManager.MinionsAndMonsters.EnemyMinions.FirstOrDefault(
-                            a => a.Distance(Player.Instance) <= 250);
-                    if (unit != null)
-                        KenchUnbenched.WSpellSwallow.Cast(unit);
+                    KenchUnbenched.WSpellSwallow.Cast(pred.CollisionObjects[0]);
+                    return;
                 }
+                if (pred.CollisionObjects.Any()) continue;
+                var unit =
+                    EntityManager.MinionsAndMonsters.EnemyMinions.FirstOrDefault(
+                        a => a.Distance(Player.Instance) <= 250);
+                if (unit != null)
+                    KenchUnbenched.WSpellSwallow.Cast(unit);
             }
         }
     }

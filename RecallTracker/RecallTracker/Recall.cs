@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 
 namespace RecallTracker
@@ -18,11 +14,11 @@ namespace RecallTracker
             ExpireTime = RecallEnd + 2000;
         }
 
-        public int RecallEnd;
-        public int Duration;
-        public int RecallStart;
+        private int RecallEnd;
+        private int Duration;
+        private int RecallStart;
         public int ExpireTime;
-        public int CancelT;
+        private int CancelT;
 
         public AIHeroClient Unit;
 

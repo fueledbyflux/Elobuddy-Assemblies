@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EloBuddy;
+﻿using EloBuddy;
 using EloBuddy.SDK;
 
 namespace EliseBuddy
 {
-    class EliseDamage
+    internal static class EliseDamage
     {
         public static float QHumanDamage(Obj_AI_Base target)
         {

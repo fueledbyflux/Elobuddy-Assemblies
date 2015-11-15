@@ -30,7 +30,7 @@ namespace LeeSinBuddy
             return (unit.HasBuffs("BlindMonkQOne") || unit.HasBuffs("blindmonkqonechaos"));
         }
 
-        public static bool HasBuffs(this Obj_AI_Base unit, string s)
+        private static bool HasBuffs(this Obj_AI_Base unit, string s)
         {
             return
                 unit.Buffs.Any(

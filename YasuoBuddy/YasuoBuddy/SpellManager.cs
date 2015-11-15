@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Net;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -7,7 +6,7 @@ using EloBuddy.SDK.Events;
 
 namespace YasuoBuddy
 {
-    internal class SpellManager
+    internal static class SpellManager
     {
         public static Spell.Targeted E = new Spell.Targeted(SpellSlot.E, 475);
         public static Spell.Active R = new Spell.Active(SpellSlot.R, 1200);
@@ -25,9 +24,8 @@ namespace YasuoBuddy
         {
             if (!Q.IsReady() || Player.Instance.HasWhirlwind()) return;
             var targets = EntityManager.Heroes.Enemies.Where(a => a.Distance(Player.Instance.Position) < 475 && !a.IsDead && a.Health > 0).Select(a => a as Obj_AI_Base);
-            foreach (var target in targets.ToList())
+            foreach (var target in targets.ToList().Where(target => target != null))
             {
-                if (target == null) continue;
                 if (!Player.Instance.IsDashing())
                 {
                     Q.Cast(target);
@@ -39,22 +37,18 @@ namespace YasuoBuddy
                 break;
             }
             targets = EntityManager.MinionsAndMonsters.CombinedAttackable.Where(a => a.Distance(Player.Instance.Position) <= 475 && !a.IsDead && a.Health > 0).Select(a => a as Obj_AI_Base);
-            foreach (var target in targets.ToList())
+            foreach (var target in targets.ToList().Where(target => target != null))
             {
-                if (target != null)
+                if (!Player.Instance.IsDashing())
                 {
-                    if (!Player.Instance.IsDashing())
-                    {
-                        Q.Cast(target);
-                        break;
-                    }
-                    if (
-                        DashingManager.GetPlayerPosition(300).Distance(Prediction.Position.PredictUnitPosition(target, 300)) < 400)
-                    {
-                        Player.CastSpell(SpellSlot.Q);
-                        break;
-                    }
+                    Q.Cast(target);
+                    break;
                 }
+                if (
+                    !(DashingManager.GetPlayerPosition(300)
+                        .Distance(Prediction.Position.PredictUnitPosition(target, 300)) < 400)) continue;
+                Player.CastSpell(SpellSlot.Q);
+                break;
             }
         }
 
@@ -77,7 +71,7 @@ namespace YasuoBuddy
             }).OrderBy(a => a).FirstOrDefault();
         }
 
-        public static int GetNewQSpeed()
+        private static int GetNewQSpeed()
         {
             return (int) (1/(1/0.5*Player.Instance.AttackSpeedMod));
         }

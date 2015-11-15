@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu.Values;
@@ -13,7 +10,7 @@ using Color = SharpDX.Color;
 
 namespace GangplankBuddy
 {
-    static class BarrelManager
+    internal static class BarrelManager
     {
         public static void Init()
         {
@@ -40,7 +37,7 @@ namespace GangplankBuddy
                     Circle.Draw(Color.Wheat, 350, gameObject.Position);
                 }
             }
-            if (Program.DrawingMenu["drawKillable"].Cast<CheckBox>().CurrentValue)
+            if (!Program.DrawingMenu["drawKillable"].Cast<CheckBox>().CurrentValue) return;
             {
                 foreach (var gameObject in Killablebarrels)
                 {

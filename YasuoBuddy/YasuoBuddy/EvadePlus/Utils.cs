@@ -14,15 +14,7 @@ namespace YasuoBuddy.EvadePlus
 
         public static Random Random
         {
-            get
-            {
-                if (_random == null)
-                {
-                    _random = new Random();
-                }
-
-                return _random;
-            }
+            get { return _random ?? (_random = new Random()); }
         }
 
         #region "Extensions"
@@ -52,7 +44,7 @@ namespace YasuoBuddy.EvadePlus
             return (int) (1000*unit.ServerPosition.Distance(point)/unit.MoveSpeed);
         }
 
-        public static bool IsMovingTowards(this Obj_AI_Base unit, Vector3 position)
+        private static bool IsMovingTowards(this Obj_AI_Base unit, Vector3 position)
         {
             return unit.Path.Length > 2 && unit.Path.Last().Distance(position, true) <= 50.Pow();
         }
@@ -62,7 +54,7 @@ namespace YasuoBuddy.EvadePlus
             return unit.IsMovingTowards(position.To3DWorld());
         }
 
-        public static Vector3 To3DPlayer(this Vector2 vector)
+        private static Vector3 To3DPlayer(this Vector2 vector)
         {
             return new Vector3(vector.X, vector.Y, Player.Instance.Position.Z);
         }
@@ -111,7 +103,7 @@ namespace YasuoBuddy.EvadePlus
                    point.Distance(segmentStart, true) <= d + tolerance;
         }
 
-        public static Geometry.Polygon ToPolygon(this List<Vector2> points)
+        private static Geometry.Polygon ToPolygon(this List<Vector2> points)
         {
             var polygon = new Geometry.Polygon();
             polygon.Points.AddRange(points);
@@ -197,7 +189,7 @@ namespace YasuoBuddy.EvadePlus
             return points.ToArray();
         }
 
-        public static List<Vector2> GetSortedPath(this List<Vector2> path, Vector2 start)
+        private static IEnumerable<Vector2> GetSortedPath(this List<Vector2> path, Vector2 start)
         {
             var list = new List<Vector2>();
             var current = start;
@@ -239,12 +231,7 @@ namespace YasuoBuddy.EvadePlus
             }
 
             var minion = obj as Obj_AI_Minion;
-            if (minion != null)
-            {
-                return minion.BaseSkinName;
-            }
-
-            return obj.Name;
+            return minion != null ? minion.BaseSkinName : obj.Name;
         }
 
         public static GameObjectTeam GetTeam(GameObject obj)
@@ -305,7 +292,7 @@ namespace YasuoBuddy.EvadePlus
             }
         }
 
-        public static Vector2[] GetLineCircleIntersectionPoints(Vector2 center, float radius, Vector2 segmentStart,
+        public static IEnumerable<Vector2> GetLineCircleIntersectionPoints(Vector2 center, float radius, Vector2 segmentStart,
             Vector2 segmentEnd)
         {
             float t;
@@ -358,7 +345,7 @@ namespace YasuoBuddy.EvadePlus
             //.Where(p => p.IsInLineSegment(segmentStart, segmentEnd)).ToArray()
         }
 
-        public static Vector2 GetLinesIntersectionPoint(Vector2 start1, Vector2 end1, Vector2 start2, Vector2 end2,
+        private static Vector2 GetLinesIntersectionPoint(Vector2 start1, Vector2 end1, Vector2 start2, Vector2 end2,
             out bool intersection)
         {
             var a1 = end1.Y - start1.Y;
@@ -379,7 +366,7 @@ namespace YasuoBuddy.EvadePlus
             return new Vector2((b2*c1 - b1*c2)/det, (a1*c2 - a2*c1)/det);
         }
 
-        public static Vector2 GetLineSegmentsIntersectionPoint(Vector2 segmentStart1, Vector2 segmentEnd1,
+        private static Vector2 GetLineSegmentsIntersectionPoint(Vector2 segmentStart1, Vector2 segmentEnd1,
             Vector2 segmentStart2, Vector2 segmentEnd2, out bool intersection)
         {
             bool intersect;
@@ -401,7 +388,7 @@ namespace YasuoBuddy.EvadePlus
     {
         private readonly List<T> _list = new List<T>();
 
-        public int Index;
+        private int Index;
 
         public LinkedList(IEnumerable<T> elements, int index = 0)
         {

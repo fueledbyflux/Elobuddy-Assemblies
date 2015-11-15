@@ -12,21 +12,17 @@ using Color = System.Drawing.Color;
 
 namespace LeeSinBuddy
 {
-    internal class InsecManager
+    internal static class InsecManager
     {
-        public static Obj_AI_Base AllyTarget;
-        public static AIHeroClient EnemyTarget;
-        public static Vector3 InsecPos;
-        public static bool InsecActive;
-        public static bool WtfSecActive;
-        public static long LastUpdate;
-        public static Menu InsecMenu;
-        public static bool ShouldFlash;
+        private static Obj_AI_Base AllyTarget;
+        private static Vector3 InsecPos;
+        private static bool InsecActive;
+        private static bool WtfSecActive;
+        private static long LastUpdate;
+        private static Menu InsecMenu;
+        private static bool ShouldFlash;
 
-        public static AIHeroClient InsecTarget
-        {
-            get { return EnemyTarget; }
-        }
+        private static AIHeroClient InsecTarget { get; set; }
 
         private static AIHeroClient _Player
         {
@@ -81,14 +77,6 @@ namespace LeeSinBuddy
 
         private static void AIHeroClient_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            return;
-
-            if (args.SData.Name == Program.Spells["R1"] && InsecPos.IsValid() && ShouldFlash)
-            {
-                var spell = _Player.Spellbook.Spells.FirstOrDefault(a => a.Name.ToLower().Contains("summonerflash"));
-                if (spell == null || !spell.IsReady) return;
-                _Player.Spellbook.CastSpell(spell.Slot, InsecPos);
-            }
         }
 
         private static void Drawing_OnDraw(EventArgs args)
@@ -102,17 +90,15 @@ namespace LeeSinBuddy
             {
                 Circle.Draw(SharpDX.Color.BlueViolet, AllyTarget.BoundingRadius + 100, AllyTarget.Position);
             }
-            if (InsecPos.IsValid() && InsecActive && GetTargetForInsec() != null)
-            {
-                var p1 = Drawing.WorldToScreen(WtfSecActive ? Game.CursorPos : GetBestInsecPos());
-                Circle.Draw(SharpDX.Color.DodgerBlue, 100, InsecPos);
-                Drawing.DrawLine(p1, Drawing.WorldToScreen(InsecPos), 3, Color.CornflowerBlue);
-            }
+            if (!InsecPos.IsValid() || !InsecActive || GetTargetForInsec() == null) return;
+            var p1 = Drawing.WorldToScreen(WtfSecActive ? Game.CursorPos : GetBestInsecPos());
+            Circle.Draw(SharpDX.Color.DodgerBlue, 100, InsecPos);
+            Drawing.DrawLine(p1, Drawing.WorldToScreen(InsecPos), 3, Color.CornflowerBlue);
         }
 
-        public static void WtfSec()
+        private static void WtfSec()
         {
-            var target = EnemyTarget;
+            var target = InsecTarget;
 
             Orbwalker.OrbwalkTo(target.Position);
 
@@ -158,9 +144,9 @@ namespace LeeSinBuddy
             }
         }
 
-        public static void Insec()
+        private static void Insec()
         {
-            var target = EnemyTarget;
+            var target = InsecTarget;
 
             Orbwalker.OrbwalkTo(InsecMenu["insecPositionMode"].Cast<Slider>().CurrentValue == 1 && target != null || GetBestInsecPos() == Game.CursorPos && target != null ? target.Position : Game.CursorPos);
 
@@ -206,21 +192,15 @@ namespace LeeSinBuddy
             {
                 Program.Q2.Cast();
             }
-            if (Program.Q.Instance().Name == Program.Spells["Q1"] && Program.Q.IsReady() && target.Distance(_Player) < Program.Q.Range)
+            if (Program.Q.Instance().Name != Program.Spells["Q1"] || !Program.Q.IsReady() ||
+                !(target.Distance(_Player) < Program.Q.Range)) return;
             {
-                if (!SpellClass.SmiteQCast(target) && InsecMenu["checkAllUnits"].Cast<CheckBox>().CurrentValue)
+                if (SpellClass.SmiteQCast(target) || !InsecMenu["checkAllUnits"].Cast<CheckBox>().CurrentValue) return;
+                foreach (var pred in EntityManager.MinionsAndMonsters.EnemyMinions.Where(
+                    a => a.Distance(_Player) < Program.Q.Range && a.Distance(InsecPos) < 550).Select(unit => Program.Q.GetPrediction(unit)).Where(pred => pred.HitChance <= HitChance.Medium))
                 {
-                    foreach (
-                        var unit in
-                            EntityManager.MinionsAndMonsters.EnemyMinions.Where(
-                                    a => a.Distance(_Player) < Program.Q.Range && a.Distance(InsecPos) < 550)
-                        )
-                    {
-                        var pred = Program.Q.GetPrediction(unit);
-                        if (pred.HitChance > HitChance.Medium) continue;
-                        Program.Q.Cast(pred.CastPosition);
-                        break;
-                    }
+                    Program.Q.Cast(pred.CastPosition);
+                    break;
                 }
             }
         }
@@ -234,7 +214,7 @@ namespace LeeSinBuddy
             return result;
         }
 
-        public static AIHeroClient GetTargetForInsec()
+        private static AIHeroClient GetTargetForInsec()
         {
             switch (InsecMenu["insecTargetMode"].Cast<Slider>().CurrentValue)
             {
@@ -245,7 +225,7 @@ namespace LeeSinBuddy
             }
         }
 
-        public static Vector3 GetBestInsecPos()
+        private static Vector3 GetBestInsecPos()
         {
             switch (InsecMenu["insecPositionMode"].Cast<Slider>().CurrentValue)
             {
@@ -281,7 +261,7 @@ namespace LeeSinBuddy
 
             if (enemyT != null)
             {
-                EnemyTarget = enemyT;
+                InsecTarget = enemyT;
                 return;
             }
 
@@ -301,7 +281,7 @@ namespace LeeSinBuddy
             }
 
             AllyTarget = null;
-            EnemyTarget = null;
+            InsecTarget = null;
         }
     }
 }

@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
 
 namespace KenchUnbenched
 {
-    static class Extentions
+    internal static class Extentions
     {
         public static Obj_AI_Base Caster(this BuffInstance buffInstance)
         {

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
@@ -8,9 +6,9 @@ using EloBuddy.SDK.Menu.Values;
 
 namespace YasuoBuddy
 {
-    class StateManager
+    static class StateManager
     {
-        public static Obj_AI_Base ForcedMinion;
+        private static Obj_AI_Base ForcedMinion;
 
         public static void Combo()
         {
@@ -52,15 +50,13 @@ namespace YasuoBuddy
 
             if (Yasuo.ComboMenu["combo.E"].Cast<CheckBox>().CurrentValue && target.Distance(Player.Instance) > Player.Instance.GetAutoAttackRange(target) && !Player.Instance.IsDashing())
             {
-                foreach (var unit in EntityManager.MinionsAndMonsters.CombinedAttackable)
+                foreach (var unit in EntityManager.MinionsAndMonsters.CombinedAttackable.Where(unit => unit.GetDashPos().Distance(target) < Player.Instance.Distance(target) && (!unit.GetDashPos().IsUnderTower() || TargetSelector.SelectedTarget == target)))
                 {
-                    if (!(unit.GetDashPos().Distance(target) < Player.Instance.Distance(target)) || (unit.GetDashPos().IsUnderTower() && TargetSelector.SelectedTarget != target)) continue;
                     SpellManager.E.Cast(unit);
                     return;
                 }
-                foreach (var unit in EntityManager.Heroes.Enemies)
+                foreach (var unit in EntityManager.Heroes.Enemies.Where(unit => unit.GetDashPos().Distance(target) < Player.Instance.Distance(target) && (!unit.GetDashPos().IsUnderTower() || TargetSelector.SelectedTarget == target)))
                 {
-                    if (!(unit.GetDashPos().Distance(target) < Player.Instance.Distance(target)) || (unit.GetDashPos().IsUnderTower() && TargetSelector.SelectedTarget != target)) continue;
                     SpellManager.E.Cast(unit);
                     return;
                 }
@@ -155,11 +151,12 @@ namespace YasuoBuddy
                 SpellManager.Q.Cast(minion);
                 return;
             }
-            if (Yasuo.FarmMenu["WC.Q"].Cast<CheckBox>().CurrentValue && Yasuo.FarmMenu["WC.E"].Cast<CheckBox>().CurrentValue && SpellManager.E.IsReady() && SpellManager.Q.IsReady() && DamageHandler.EDamage(minion) + DamageHandler.QDamage(minion) > minion.Health && !minion.GetDashPos().IsUnderTower())
-            {
-                SpellManager.Q.Cast(minion);
-                return;
-            }
+            if (!Yasuo.FarmMenu["WC.Q"].Cast<CheckBox>().CurrentValue ||
+                !Yasuo.FarmMenu["WC.E"].Cast<CheckBox>().CurrentValue || !SpellManager.E.IsReady() ||
+                !SpellManager.Q.IsReady() ||
+                !(DamageHandler.EDamage(minion) + DamageHandler.QDamage(minion) > minion.Health) ||
+                minion.GetDashPos().IsUnderTower()) return;
+            SpellManager.Q.Cast(minion);
         }
 
         public static void LastHit()

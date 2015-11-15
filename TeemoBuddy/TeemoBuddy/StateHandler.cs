@@ -1,25 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu.Values;
 
 namespace TeemoBuddy
 {
-    class StateHandler
+    internal static class StateHandler
     {
-        public static AIHeroClient _Player { get { return ObjectManager.Player; } }
-        public static float GetDynamicRange()
+        private static AIHeroClient _Player { get { return ObjectManager.Player; } }
+
+        private static float GetDynamicRange()
         {
-            if (Program.Q.IsReady())
-            {
-                return Program.Q.Range;
-            }
-            return _Player.GetAutoAttackRange();
+            return Program.Q.IsReady() ? Program.Q.Range : _Player.GetAutoAttackRange();
         }
+
         public static void Combo()
         {
             var target = TargetSelector2.GetTarget(GetDynamicRange() + 100, DamageType.Magical);
@@ -56,22 +50,18 @@ namespace TeemoBuddy
 
         public static void LastHit()
         {
-            if (Program.FarmMenu["useQFarmLH"].Cast<CheckBox>().CurrentValue && Program.Q.IsReady())
-            {
-                var minion = ObjectManager.Get<Obj_AI_Minion>().FirstOrDefault(a => a.IsEnemy && a.Health <= QDamage(a));
-                if (minion == null) return;
-                Program.Q.Cast(minion);
-            }
+            if (!Program.FarmMenu["useQFarmLH"].Cast<CheckBox>().CurrentValue || !Program.Q.IsReady()) return;
+            var minion = ObjectManager.Get<Obj_AI_Minion>().FirstOrDefault(a => a.IsEnemy && a.Health <= QDamage(a));
+            if (minion == null) return;
+            Program.Q.Cast(minion);
         }
 
         public static void WaveClear()
         {
-            if (Program.FarmMenu["useQFarmWC"].Cast<CheckBox>().CurrentValue && Program.Q.IsReady())
-            {
-                var minion = ObjectManager.Get<Obj_AI_Minion>().FirstOrDefault(a => a.IsEnemy && a.Health <= QDamage(a));
-                if (minion == null) return;
-                Program.Q.Cast(minion);
-            }
+            if (!Program.FarmMenu["useQFarmWC"].Cast<CheckBox>().CurrentValue || !Program.Q.IsReady()) return;
+            var minion = ObjectManager.Get<Obj_AI_Minion>().FirstOrDefault(a => a.IsEnemy && a.Health <= QDamage(a));
+            if (minion == null) return;
+            Program.Q.Cast(minion);
         }
 
         public static void Flee()
@@ -86,7 +76,7 @@ namespace TeemoBuddy
             }
         }
 
-        public static float QDamage(Obj_AI_Base target)
+        private static float QDamage(Obj_AI_Base target)
         {
             return _Player.CalculateDamageOnUnit(target, DamageType.Magical,
                 (float) (new[] {80, 125, 170, 215, 260}[Program.Q.Level] + 0.8*_Player.FlatMagicDamageMod));

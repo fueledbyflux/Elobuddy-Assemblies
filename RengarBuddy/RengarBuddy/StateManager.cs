@@ -1,22 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu.Values;
 
 namespace RengarBuddy
 {
-    class StateManager
+    internal static class StateManager
     {
-        public static AIHeroClient _Player { get { return ObjectManager.Player; } }
+        private static AIHeroClient _Player { get { return ObjectManager.Player; } }
 
-        public static float GetCustomRange()
+        private static float GetCustomRange()
         {
-            return new float[] { Program.E.IsReady() ? Program.E.Range : 0, Program.W.IsReady() ? Program.W.Range : 0, Player.Instance.GetAutoAttackRange()}.Max();
+            return new[] { Program.E.IsReady() ? Program.E.Range : 0, Program.W.IsReady() ? Program.W.Range : 0, Player.Instance.GetAutoAttackRange()}.Max();
         }
 
         public static void Combo()
@@ -87,7 +82,6 @@ namespace RengarBuddy
                     if (Program.E.IsReady() && Program.ComboMenu["eCombo"].Cast<CheckBox>().CurrentValue && target.IsValidTarget(Program.E.Range))
                     {
                         Program.E.Cast(target);
-                        return;
                     }
                     break;
             }
@@ -153,11 +147,9 @@ namespace RengarBuddy
                     Program.W.Cast();
                     return;
                 }
-                if (Program.FarmMenu["eLastHit"].Cast<CheckBox>().CurrentValue && Damage.E(source) > source.Health && source.Distance(_Player) < Program.E.Range)
-                {
-                    Program.E.Cast(source);
-                    return;
-                }
+            if (!Program.FarmMenu["eLastHit"].Cast<CheckBox>().CurrentValue || !(Damage.E(source) > source.Health) ||
+                !(source.Distance(_Player) < Program.E.Range)) return;
+            Program.E.Cast(source);
         }
 
         public static void WaveClear()
@@ -198,11 +190,9 @@ namespace RengarBuddy
                     Program.W.Cast();
                     return;
                 }
-                if (Program.E.IsReady() && Program.FarmMenu["eWaveClear"].Cast<CheckBox>().CurrentValue && Damage.E(source) > source.Health && source.Distance(_Player) < Program.E.Range)
-                {
-                    Program.E.Cast(source);
-                    return;
-                }
+            if (!Program.E.IsReady() || !Program.FarmMenu["eWaveClear"].Cast<CheckBox>().CurrentValue ||
+                !(Damage.E(source) > source.Health) || !(source.Distance(_Player) < Program.E.Range)) return;
+            Program.E.Cast(source);
         }
 
         public static void Jungle()

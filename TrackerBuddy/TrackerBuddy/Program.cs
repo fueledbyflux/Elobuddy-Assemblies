@@ -4,12 +4,10 @@ using System.Drawing;
 using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
-using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
 using EloBuddy.SDK.Menu.Values;
 using EloBuddy.SDK.Rendering;
-using EloBuddy.SDK.Utils;
 using SharpDX;
 using TrackerBuddy.Properties;
 using Color = SharpDX.Color;
@@ -32,16 +30,16 @@ namespace TrackerBuddy
         private const int OffsetXpX = 0; //44
         private const int OffsetXpY = -6; //53
 
-        public static readonly TextureLoader TextureLoader = new TextureLoader();
+        private static readonly TextureLoader TextureLoader = new TextureLoader();
 
         private static Sprite MainBar { get; set; }
         private static Text Text { get; set; }
 
-        public static readonly SpellSlot[] SpellSlots = { SpellSlot.Q, SpellSlot.W, SpellSlot.E, SpellSlot.R };
+        private static readonly SpellSlot[] SpellSlots = { SpellSlot.Q, SpellSlot.W, SpellSlot.E, SpellSlot.R };
         private static readonly SpellSlot[] Summoners = { SpellSlot.Summoner1, SpellSlot.Summoner2 };
         private static readonly Dictionary<string, Sprite> SummonerSpells = new Dictionary<string, Sprite>();
 
-        public static Menu Menu { get; set; }
+        private static Menu Menu { get; set; }
 
         private static int Mode
         {
@@ -197,12 +195,10 @@ namespace TrackerBuddy
                         sprite.Draw(new Vector2(spellPos.X, spellPos.Y));
                     }
 
-                    if (DrawText && cooldown > 0)
-                    {
-                        Text.TextValue = Math.Floor(cooldown).ToString();
-                        Text.Position = new Vector2((int) spellPos.X - 30 + Text.TextValue.Length, (int) spellPos.Y - 1);
-                        Text.Draw();
-                    }
+                    if (!DrawText || !(cooldown > 0)) continue;
+                    Text.TextValue = Math.Floor(cooldown).ToString();
+                    Text.Position = new Vector2((int) spellPos.X - 30 + Text.TextValue.Length, (int) spellPos.Y - 1);
+                    Text.Draw();
                 }
 
                 // Spell cooldowns
@@ -217,12 +213,10 @@ namespace TrackerBuddy
                             new Vector2(spellPos.X + (int) (percent*22), spellPos.Y + 2),
                             Mode == 1 ? 5 : 11, spell.IsLearned ? GetDrawColor(percent) : System.Drawing.Color.SlateGray);
 
-                    if (DrawText && spell.IsLearned && cooldown > 0)
-                    {
-                        Text.TextValue = Math.Floor(cooldown).ToString();
-                        Text.Position = new Vector2((int) spellPos.X + 10 - Text.TextValue.Length * 2, (int) spellPos.Y + 28);
-                        Text.Draw();
-                    }
+                    if (!DrawText || !spell.IsLearned || !(cooldown > 0)) continue;
+                    Text.TextValue = Math.Floor(cooldown).ToString();
+                    Text.Position = new Vector2((int) spellPos.X + 10 - Text.TextValue.Length * 2, (int) spellPos.Y + 28);
+                    Text.Draw();
                 }
 
                 //Cooldowns
@@ -253,6 +247,38 @@ namespace TrackerBuddy
                     return new Vector2(normalPos.X + 2 * 27, normalPos.Y);
                 case SpellSlot.R:
                     return new Vector2(normalPos.X + 3 * 27, normalPos.Y);
+                case SpellSlot.Unknown:
+                    break;
+                case SpellSlot.Q:
+                    break;
+                case SpellSlot.Summoner1:
+                    break;
+                case SpellSlot.Summoner2:
+                    break;
+                case SpellSlot.Item1:
+                    break;
+                case SpellSlot.Item2:
+                    break;
+                case SpellSlot.Item3:
+                    break;
+                case SpellSlot.Item4:
+                    break;
+                case SpellSlot.Item5:
+                    break;
+                case SpellSlot.Item6:
+                    break;
+                case SpellSlot.Trinket:
+                    break;
+                case SpellSlot.Recall:
+                    break;
+                case SpellSlot.OathSworn:
+                    break;
+                case SpellSlot.CapturePoint:
+                    break;
+                case SpellSlot.Internal:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("slot", slot, null);
             }
             return normalPos;
         }
@@ -263,7 +289,7 @@ namespace TrackerBuddy
             return slot == SpellSlot.Summoner2 ? new Vector2(normalPos.X, normalPos.Y + 17) : normalPos;
         }
 
-        public static System.Drawing.Color GetDrawColor(float percent)
+        private static System.Drawing.Color GetDrawColor(float percent)
         {
             if (percent < 0.3)
             {
@@ -280,11 +306,9 @@ namespace TrackerBuddy
         {
             TextureLoader.Dispose();
 
-            if (Text != null)
-            {
-                Text.Dispose();
-                Text = null;
-            }
+            if (Text == null) return;
+            Text.Dispose();
+            Text = null;
         }
     }
 }

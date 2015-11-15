@@ -23,17 +23,15 @@ namespace LeeSinBuddy
                 Program.Q.Cast(pred.CastPosition);
                 return true;
             }
-            if (pred.CollisionObjects.Count() == 1 && Smiter.Smite.IsReady() && Smiter.SmiteMenu["smiteQ"].Cast<CheckBox>().CurrentValue)
-            {
-                var unit = pred.CollisionObjects[0];
-                if ((unit.IsMinion() || EntityManager.MinionsAndMonsters.CombinedAttackable.Any(a => a.NetworkId == unit.NetworkId)) && unit.Health <= Smiter.GetSmiteDamage() && unit.IsValidTarget(Smiter.Smite.Range))
-                {
-                    Program.Q.Cast(pred.CastPosition);
-                    Core.DelayAction(delegate { Smiter.Smite.Cast(unit); }, 250);
-                    return true;
-                }
-            }
-            return false;
+            if (pred.CollisionObjects.Length != 1 || !Smiter.Smite.IsReady() ||
+                !Smiter.SmiteMenu["smiteQ"].Cast<CheckBox>().CurrentValue) return false;
+            var unit = pred.CollisionObjects[0];
+            if ((!unit.IsMinion() &&
+                 EntityManager.MinionsAndMonsters.CombinedAttackable.All(a => a.NetworkId != unit.NetworkId)) ||
+                !(unit.Health <= Smiter.GetSmiteDamage()) || !unit.IsValidTarget(Smiter.Smite.Range)) return false;
+            Program.Q.Cast(pred.CastPosition);
+            Core.DelayAction(delegate { Smiter.Smite.Cast(unit); }, 250);
+            return true;
         }
     }
 }

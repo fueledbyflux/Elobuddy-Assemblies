@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
 using SharpDX;
 
 namespace YasuoBuddy
 {
-    static class Extentions
+    internal static class Extentions
     {
         public static bool HasWhirlwind(this AIHeroClient unit)
         {

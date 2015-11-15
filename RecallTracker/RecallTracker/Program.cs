@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
@@ -17,12 +14,12 @@ using Color = System.Drawing.Color;
 
 namespace RecallTracker
 {
-    static class Program
+    internal static class Program
     {
-        public static List<Recall> Recalls = new List<Recall>();
+        private static List<Recall> Recalls = new List<Recall>();
 
-        public static readonly TextureLoader TextureLoader = new TextureLoader();
-        public static Menu Menu;
+        private static readonly TextureLoader TextureLoader = new TextureLoader();
+        private static Menu Menu;
 
         static void Main(string[] args)
         {
@@ -74,11 +71,11 @@ namespace RecallTracker
         {
             if (!Recalls.Any() && !Menu["alwaysDrawFrame"].Cast<CheckBox>().CurrentValue) return;
 
-            int x = (int) ((Drawing.Width * 0.846875) + Menu["recallX"].Cast<Slider>().CurrentValue);
-            int y = (int) (Drawing.Height * 0.5555555555555556) + Menu["recallY"].Cast<Slider>().CurrentValue;
+            var x = (int) ((Drawing.Width * 0.846875) + Menu["recallX"].Cast<Slider>().CurrentValue);
+            var y = (int) (Drawing.Height * 0.5555555555555556) + Menu["recallY"].Cast<Slider>().CurrentValue;
 
             TopSprite.Draw(new Vector2(x + 1, y));
-            int bonus = 0;
+            var bonus = 0;
             foreach (var recall in Recalls.ToList())
             {
                 BackSprite.Draw(new Vector2(x, y + 18 + bonus));
@@ -97,7 +94,7 @@ namespace RecallTracker
             BottomSprite.Draw(new Vector2(x + 1, y + bonus + 18));
         }
 
-        public static Color BarColour(float percent)
+        private static Color BarColour(float percent)
         {
             if (percent > 80)
             {
@@ -112,15 +109,7 @@ namespace RecallTracker
             {
                 return Color.MediumSpringGreen;
             }
-            if (percent > 20)
-            {
-                return Color.Aquamarine;
-            }
-            if (percent > 0)
-            {
-                return Color.DeepSkyBlue;
-            }
-            return Color.DeepSkyBlue;
+            return percent > 20 ? Color.Aquamarine : Color.DeepSkyBlue;
         }
 
         private static void Teleport_OnTeleport(Obj_AI_Base sender, Teleport.TeleportEventArgs args)
@@ -143,14 +132,19 @@ namespace RecallTracker
                     }
                     Recalls.Add(new Recall((AIHeroClient)sender, Environment.TickCount, Environment.TickCount + args.Duration, args.Duration));
                     break;
+                case TeleportStatus.Finish:
+                    break;
+                case TeleportStatus.Unknown:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
-        public static string Truncate(this string value, int maxLength)
+        private static string Truncate(this string value, int maxLength)
         {
             if (string.IsNullOrEmpty(value)) return value;
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
         }
-
     }
 }

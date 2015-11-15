@@ -53,7 +53,7 @@ namespace YasuoBuddy.EvadePlus
             return true;
         }
 
-        public virtual void OnDispose()
+        public void OnDispose()
         {
         }
 

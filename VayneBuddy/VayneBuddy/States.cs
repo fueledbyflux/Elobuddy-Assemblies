@@ -5,9 +5,9 @@ using EloBuddy.SDK.Menu.Values;
 
 namespace VayneBuddy
 {
-    class States
+    static class States
     {
-        public static AIHeroClient _Player
+        private static AIHeroClient _Player
         {
             get { return ObjectManager.Player; }
         }
@@ -34,14 +34,12 @@ namespace VayneBuddy
                 {
                     Core.DelayAction(delegate
                     {
-                        if (Program.CondemnMenu["condemnComboTrinket"].Cast<CheckBox>().CurrentValue)
+                        if (!Program.CondemnMenu["condemnComboTrinket"].Cast<CheckBox>().CurrentValue) return;
+                        var pos = Condemn.GetFirstNonWallPos(_Player.Position.To2D(), target.Position.To2D());
+                        if (pos.ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Grass))
                         {
-                            var pos = Condemn.GetFirstNonWallPos(_Player.Position.To2D(), target.Position.To2D());
-                            if (pos.ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Grass))
-                            {
-                                Player.CastSpell(SpellSlot.Trinket,
-                                    pos.To3D());
-                            }
+                            Player.CastSpell(SpellSlot.Trinket,
+                                pos.To3D());
                         }
                     }, 200);
                 }

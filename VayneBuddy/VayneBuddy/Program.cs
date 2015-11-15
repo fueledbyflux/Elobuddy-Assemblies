@@ -21,7 +21,7 @@ namespace VayneBuddy
             Loading.OnLoadingComplete += Game_OnStart;
         }
 
-        public static AIHeroClient _Player
+        private static AIHeroClient _Player
         {
             get { return ObjectManager.Player; }
         }
@@ -30,18 +30,22 @@ namespace VayneBuddy
         public static Spell.Targeted E;
         public static Spell.Active R;
 
-        public static Menu Menu,
-            ComboMenu,
-            HarassMenu,
-            FarmMenu,
-            CondemnMenu,
+        private static Menu Menu;
+
+        public static Menu ComboMenu;
+
+        private static Menu HarassMenu;
+
+        private static Menu FarmMenu;
+
+        public static Menu CondemnMenu,
             DrawMenu,
             InterruptorMenu,
             GapCloserMenu,
             CondemnPriorityMenu;
-        
-        public static string[] DangerSliderValues = {"Low", "Medium", "High"};
-        public static string[] PriorityValues = {"Very Low", "Low", "Medium", "High", "Very High"};
+
+        private static string[] DangerSliderValues = {"Low", "Medium", "High"};
+        private static string[] PriorityValues = {"Very Low", "Low", "Medium", "High", "Very High"};
         public static List<Vector2> Points = new List<Vector2>();
 
         private static void Game_OnStart(EventArgs args)
@@ -166,63 +170,64 @@ namespace VayneBuddy
         private static void Obj_AI_Base_OnSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (!sender.IsMe) return;
-            if (args.SData.IsAutoAttack())
+            if (!args.SData.IsAutoAttack()) return;
+            var target = (Obj_AI_Base) args.Target;
+
+            if (target is AIHeroClient)
             {
-                var target = (Obj_AI_Base) args.Target;
-
-                if (target is AIHeroClient)
+                if (DrawMenu["condemnNextAA"].Cast<KeyBind>().CurrentValue && E.IsReady())
                 {
-                    if (DrawMenu["condemnNextAA"].Cast<KeyBind>().CurrentValue && E.IsReady())
-                    {
-                        E.Cast(target);
-                        DrawMenu["condemnNextAA"].Cast<KeyBind>().CurrentValue = false;
-                    }
-                    if (target.IsValidTarget() && Q.IsReady() &&
-                        (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo) &&
-                        ComboMenu["useQCombo"].Cast<CheckBox>().CurrentValue ||
-                         Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Harass) &&
-                         HarassMenu["useQHarass"].Cast<CheckBox>().CurrentValue))
-                    {
-                        var pos = (_Player.Position.Extend(Game.CursorPos, 300).Distance(target) <=
-                                   _Player.GetAutoAttackRange(target) &&
-                                   _Player.Position.Extend(Game.CursorPos, 300).Distance(target) > 100
-                            ? Game.CursorPos
-                            : (_Player.Position.Extend(target.Position, 300).Distance(target) < 100)
-                                ? target.Position
-                                : new Vector3());
+                    E.Cast(target);
+                    DrawMenu["condemnNextAA"].Cast<KeyBind>().CurrentValue = false;
+                }
+                if (target.IsValidTarget() && Q.IsReady() &&
+                    (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo) &&
+                     ComboMenu["useQCombo"].Cast<CheckBox>().CurrentValue ||
+                     Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Harass) &&
+                     HarassMenu["useQHarass"].Cast<CheckBox>().CurrentValue))
+                {
+                    var pos = _Player.Position.Extend(Game.CursorPos, 300).Distance(target) <=
+                              _Player.GetAutoAttackRange(target) &&
+                              _Player.Position.Extend(Game.CursorPos, 300).Distance(target) > 100
+                        ? Game.CursorPos
+                        : _Player.Position.Extend(target.Position, 300).Distance(target) < 100
+                            ? target.Position
+                            : new Vector3();
 
-                        if (pos.IsValid())
-                        {
-                            Player.CastSpell(SpellSlot.Q, pos);
-                        }
-                    }
-
-                    if ( ComboMenu["useQKite"].Cast<CheckBox>().CurrentValue &&
-                        EntityManager.Heroes.Enemies.Any(
-                            a => a.IsMelee && a.Distance(Player.Instance) < a.GetAutoAttackRange(Player.Instance)))
+                    if (pos.IsValid())
                     {
-                        Player.CastSpell(SpellSlot.Q,
-                            target.Position.Extend(Player.Instance.Position,
-                                target.Position.Distance(Player.Instance) + 300).To3D());
+                        Player.CastSpell(SpellSlot.Q, pos);
                     }
                 }
 
-                if ((Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LastHit) && FarmMenu["useQLastHit"].Cast<CheckBox>().CurrentValue || Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LaneClear) && FarmMenu["useQWaveClear"].Cast<CheckBox>().CurrentValue) && Q.IsReady())
+                if ( ComboMenu["useQKite"].Cast<CheckBox>().CurrentValue &&
+                     EntityManager.Heroes.Enemies.Any(
+                         a => a.IsMelee && a.Distance(Player.Instance) < a.GetAutoAttackRange(Player.Instance)))
                 {
-                    var source =
-                        EntityManager.MinionsAndMonsters.EnemyMinions
-                            .Where(
-                                a =>  a.NetworkId != target.NetworkId && a.Distance(Player.Instance) < 300 + Player.Instance.GetAutoAttackRange(a) &&
-                                    Prediction.Health.GetPrediction(a, (int) Player.Instance.AttackDelay) < Player.Instance.GetAutoAttackDamage(a, true) + Damages.QDamage(a))
-                            .OrderBy(a => a.Health)
-                            .FirstOrDefault();
-
-                    if (source == null || Player.Instance.Position.Extend(Game.CursorPos, 300).Distance(source) >
-                        Player.Instance.GetAutoAttackRange(source) &&
-                        FarmMenu["onlyTumbleToCursor"].Cast<CheckBox>().CurrentValue) return;
-                    Orbwalker.ForcedTarget = source;
-                    Player.CastSpell(SpellSlot.Q, Player.Instance.Position.Extend(Game.CursorPos, 300).Distance(source) <= Player.Instance.GetAutoAttackRange(source) ? Game.CursorPos : source.Position);
+                    Player.CastSpell(SpellSlot.Q,
+                        target.Position.Extend(Player.Instance.Position,
+                            target.Position.Distance(Player.Instance) + 300).To3D());
                 }
+            }
+
+            if (((!Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LastHit) ||
+                  !FarmMenu["useQLastHit"].Cast<CheckBox>().CurrentValue) &&
+                 (!Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LaneClear) ||
+                  !FarmMenu["useQWaveClear"].Cast<CheckBox>().CurrentValue)) || !Q.IsReady()) return;
+            {
+                var source =
+                    EntityManager.MinionsAndMonsters.EnemyMinions
+                        .Where(
+                            a =>  a.NetworkId != target.NetworkId && a.Distance(Player.Instance) < 300 + Player.Instance.GetAutoAttackRange(a) &&
+                                  Prediction.Health.GetPrediction(a, (int) Player.Instance.AttackDelay) < Player.Instance.GetAutoAttackDamage(a, true) + Damages.QDamage(a))
+                        .OrderBy(a => a.Health)
+                        .FirstOrDefault();
+
+                if (source == null || Player.Instance.Position.Extend(Game.CursorPos, 300).Distance(source) >
+                    Player.Instance.GetAutoAttackRange(source) &&
+                    FarmMenu["onlyTumbleToCursor"].Cast<CheckBox>().CurrentValue) return;
+                Orbwalker.ForcedTarget = source;
+                Player.CastSpell(SpellSlot.Q, Player.Instance.Position.Extend(Game.CursorPos, 300).Distance(source) <= Player.Instance.GetAutoAttackRange(source) ? Game.CursorPos : source.Position);
             }
         }
 
@@ -256,12 +261,10 @@ namespace VayneBuddy
             {
                 new Circle() { Color = Color.White, Radius = E.Range }.Draw(_Player.Position);
             }
-            if (DrawMenu["condemnVisualiser"].Cast<CheckBox>().CurrentValue)
+            if (!DrawMenu["condemnVisualiser"].Cast<CheckBox>().CurrentValue) return;
+            foreach (var point in Points)
             {
-                foreach (var point in Points)
-                {
-                    new Circle() {Color = (point.To3D().ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Wall) || point.To3D().ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Building)) ? Color.Blue : Color.Red, Radius = 10}.Draw(point.To3D());
-                }
+                new Circle() {Color = point.To3D().ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Wall) || point.To3D().ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Building) ? Color.Blue : Color.Red, Radius = 10}.Draw(point.To3D());
             }
         }
 

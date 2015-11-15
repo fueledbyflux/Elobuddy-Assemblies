@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
-using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
 using EloBuddy.SDK.Menu.Values;
@@ -14,14 +9,16 @@ using SharpDX;
 
 namespace EliseBuddy
 {
-    class Elise
+    internal static class Elise
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Loading.OnLoadingComplete += Loading_OnLoadingComplete;
         }
 
-        public static Menu Menu, ComboMenu, HarassMenu, FarmMenu, DrawMenu;
+        private static Menu Menu;
+        public static Menu ComboMenu, HarassMenu, FarmMenu;
+        private static Menu DrawMenu;
 
         private static void Loading_OnLoadingComplete(EventArgs args)
         {

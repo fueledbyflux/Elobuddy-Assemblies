@@ -9,14 +9,14 @@ using SharpDX;
 
 namespace VayneBuddy
 {
-    static class Condemn
+    internal static class Condemn
     {
-        public static AIHeroClient _Player
+        private static AIHeroClient _Player
         {
             get { return ObjectManager.Player; }
         }
 
-        public static long LastCheck;
+        private static long LastCheck;
         public static int CheckCount;
         public static Spell.Skillshot ESpell;
 
@@ -40,25 +40,19 @@ namespace VayneBuddy
                 {
                     var cPos = _Player.Position.Extend(position, _Player.Distance(position) + i).To3D();
                     Program.Points.Add(cPos.To2D());
-                    if (cPos.ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Wall) || cPos.ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Building))
-                    {
-                        wallsFound++;
-                        break;
-                    }
+                    if (!cPos.ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Wall) &&
+                        !cPos.ToNavMeshCell().CollFlags.HasFlag(CollisionFlags.Building)) continue;
+                    wallsFound++;
+                    break;
                 }
             }
-            if ((wallsFound/ predictionsList.Count) >= Program.CondemnMenu["condemnPercent"].Cast<Slider>().CurrentValue/100f)
-            {
-                return true;
-            }
-            
-            return false;
+            return wallsFound/ predictionsList.Count >= Program.CondemnMenu["condemnPercent"].Cast<Slider>().CurrentValue/100f;
         }
 
         public static Vector2 GetFirstNonWallPos(Vector2 startPos, Vector2 endPos)
         {
-            int distance = 0;
-            for (int i = 0; i < Program.CondemnMenu["pushDistance"].Cast<Slider>().CurrentValue; i += 20)
+            var distance = 0;
+            for (var i = 0; i < Program.CondemnMenu["pushDistance"].Cast<Slider>().CurrentValue; i += 20)
             {
                 var cell = startPos.Extend(endPos, endPos.Distance(startPos) + i).ToNavMeshCell().CollFlags;
                 if (cell.HasFlag(CollisionFlags.Wall) || cell.HasFlag(CollisionFlags.Building))

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
@@ -13,12 +9,12 @@ using SharpDX;
 
 namespace GangplankBuddy
 {
-    class Program
+    internal static class Program
     {
+        private static Menu Menu;
+        public static Menu ComboMenu, HarassMenu, FarmingMenu, HealingMenu, DrawingMenu;
 
-        public static Menu Menu, ComboMenu, HarassMenu, FarmingMenu, HealingMenu, DrawingMenu;
-
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Loading.OnLoadingComplete += Game_OnStart;
         }

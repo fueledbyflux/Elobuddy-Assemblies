@@ -1,19 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu.Values;
 
 namespace ActivatorBuddy.Defencives
 {
-    class DefenceItems
+    internal static class DefenceItems
     {
-        public static InventorySlot Archangles, Locket, FaceOfTheMountain, ZhonyasHg, Mercs, Mikaels;
+        private static InventorySlot Archangles;
+        private static InventorySlot Locket;
+        private static InventorySlot FaceOfTheMountain;
+        private static InventorySlot ZhonyasHg;
+        private static InventorySlot Mercs;
+        private static InventorySlot Mikaels;
 
-        public static Dictionary<ItemId, Func<float>> ShieldHeals = new Dictionary<ItemId, Func<float>>()
+        private static Dictionary<ItemId, Func<float>> ShieldHeals = new Dictionary<ItemId, Func<float>>()
         {
             {ItemId.Face_of_the_Mountain, () => (float) (Player.Instance.MaxHealth*0.1)},
             {ItemId.Locket_of_the_Iron_Solari, () => 50 + Player.Instance.Level * 10 },
@@ -59,13 +62,12 @@ namespace ActivatorBuddy.Defencives
                     return true;
                 }
             }
-            if (Defence.DefenceMenu["Mikaels_Crucible_Heal"].Cast<CheckBox>().CurrentValue && Mikaels != null && Mikaels.CanUseItem() && predHp + (150 + (0.1 * ally.Health)) > 0 && ally.Distance(Player.Instance) < 750) // Mikaels
-            {
-                Player.CastSpell(Mikaels.SpellSlot, ally);
-                Defence.LastSpellCast = Environment.TickCount + 250;
-                return true;
-            }
-            return false;
+            if (!Defence.DefenceMenu["Mikaels_Crucible_Heal"].Cast<CheckBox>().CurrentValue || Mikaels == null ||
+                !Mikaels.CanUseItem() || !(predHp + (150 + (0.1*ally.Health)) > 0) ||
+                !(ally.Distance(Player.Instance) < 750)) return false;
+            Player.CastSpell(Mikaels.SpellSlot, ally);
+            Defence.LastSpellCast = Environment.TickCount + 250;
+            return true;
         }
 
         public static bool CleanseItems(AIHeroClient ally)
@@ -82,7 +84,7 @@ namespace ActivatorBuddy.Defencives
                 Defence.LastSpellCast = Environment.TickCount + 250;
                 return true;
             }
-            if (Mikaels != null && Mikaels.CanUseItem())
+            if (Mikaels == null || !Mikaels.CanUseItem()) return false;
             {
                 Player.CastSpell(Mikaels.SpellSlot, ally);
                 foreach (var spell in Defence.Damages[ally.NetworkId].DangerousSpells.Where(a => a.Value.IsCleanseable).ToList())
@@ -92,22 +94,23 @@ namespace ActivatorBuddy.Defencives
                 Defence.LastSpellCast = Environment.TickCount + 250;
                 return true;
             }
-            return false;
         }
 
         public static bool Zhonyas(AIHeroClient ally)
         {
             if (!ally.IsMe) return false;
-            if (ZhonyasHg != null && ZhonyasHg.CanUseItem() && (Player.Instance.InDanger(true) || Defence.Damages[Player.Instance.NetworkId].DangerousSpells.Any(a => a.Value.BonusDelay > 0 && (a.Key - Environment.TickCount) <= 2200 + Game.Ping || a.Value.BonusDelay == 0)))
-            {
-                Player.CastSpell(ZhonyasHg.SpellSlot);
-                Defence.LastSpellCast = Environment.TickCount + 250;
-                return true;
-            }
-            return false;
+            if (ZhonyasHg == null || !ZhonyasHg.CanUseItem() ||
+                (!Player.Instance.InDanger(true) &&
+                 !Defence.Damages[Player.Instance.NetworkId].DangerousSpells.Any(
+                     a =>
+                         a.Value.BonusDelay > 0 && (a.Key - Environment.TickCount) <= 2200 + Game.Ping ||
+                         a.Value.BonusDelay == 0))) return false;
+            Player.CastSpell(ZhonyasHg.SpellSlot);
+            Defence.LastSpellCast = Environment.TickCount + 250;
+            return true;
         }
 
-        public static void UpdateItems()
+        private static void UpdateItems()
         {
             ZhonyasHg = Player.Instance.InventoryItems.FirstOrDefault( a => a.Id == ItemId.Zhonyas_Hourglass && Defence.DefenceMenu["Zhonyas_Hourglass"].Cast<CheckBox>().CurrentValue || ItemId.Wooglets_Witchcap == a.Id && Defence.DefenceMenu["Wooglets_Witchcap"].Cast<CheckBox>().CurrentValue);
             Mercs = Player.Instance.InventoryItems.FirstOrDefault( a => a.Id == ItemId.Dervish_Blade || a.Id == ItemId.Quicksilver_Sash || a.Id == ItemId.Mercurial_Scimitar);

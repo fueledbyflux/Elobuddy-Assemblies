@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -12,18 +8,19 @@ using EloBuddy.SDK.Menu.Values;
 
 namespace TeemoBuddy
 {
-    class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Loading.OnLoadingComplete += Loading_OnLoadingComplete;
         }
 
         public static Spell.Targeted Q;
         public static Spell.Active W;
-        public static Spell.Active E;
+        private static Spell.Active E;
         public static Spell.Skillshot R;
-        public static Menu TeemoMenu, ComboMenu, HarassMenu, FarmMenu, FleeMenu;
+        private static Menu TeemoMenu;
+        public static Menu ComboMenu, HarassMenu, FarmMenu, FleeMenu;
 
         private static void Loading_OnLoadingComplete(EventArgs args)
         {

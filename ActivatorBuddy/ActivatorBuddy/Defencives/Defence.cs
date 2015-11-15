@@ -2,8 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using ActivatorBuddy.Items;
-using ActivatorBuddy.Summoner_Spells;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu;
@@ -18,9 +16,9 @@ namespace ActivatorBuddy.Defencives
             new Dictionary<int, SpellDamageClass>();
 
         public static Menu DefenceMenu;
-        public static Menu DamageEngine;
+        private static Menu DamageEngine;
 
-        public static List<SpellSlot> SpellSlots = new List<SpellSlot>()
+        private static List<SpellSlot> SpellSlots = new List<SpellSlot>()
         {
             SpellSlot.Q, SpellSlot.W, SpellSlot.E, SpellSlot.R
         };
@@ -98,12 +96,10 @@ namespace ActivatorBuddy.Defencives
         private static void Obj_AI_Base_OnBasicAttack(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (sender.IsAlly || !DamageEngine["TrackDamage"].Cast<CheckBox>().CurrentValue || !DamageEngine["ConsiderAttacks"].Cast<CheckBox>().CurrentValue || sender.IsMinion() && !DamageEngine["ConsiderMinions"].Cast<CheckBox>().CurrentValue) return;
-            if (Damages.ContainsKey(args.Target.NetworkId))
-            {
-                var target = (Obj_AI_Base) args.Target;
-                Damages[args.Target.NetworkId].AddDamage(args.SData.Name, sender.GetAutoAttackDamage(target),
-                    (target.IsMelee ? sender.AttackDelay : target.Distance(sender)/args.SData.MissileSpeed)*1000);
-            }
+            if (!Damages.ContainsKey(args.Target.NetworkId)) return;
+            var target = (Obj_AI_Base) args.Target;
+            Damages[args.Target.NetworkId].AddDamage(args.SData.Name, sender.GetAutoAttackDamage(target),
+                (target.IsMelee ? sender.AttackDelay : target.Distance(sender)/args.SData.MissileSpeed)*1000);
         }
 
         private static void GameOnOnUpdate(EventArgs args)

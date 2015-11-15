@@ -5,7 +5,7 @@ using EloBuddy.SDK.Menu.Values;
 
 namespace GangplankBuddy
 {
-    internal class StateHandler
+    internal static class StateHandler
     {
         public static void Combo()
         {
@@ -41,33 +41,28 @@ namespace GangplankBuddy
                                 SpellManager.Q.Cast(killableBarrel);
                                 return;
                             }
-                            else if (killableBarrel.Distance(Player.Instance) < Player.Instance.GetAutoAttackRange(killableBarrel))
+                            if (killableBarrel.Distance(Player.Instance) < Player.Instance.GetAutoAttackRange(killableBarrel))
                             {
                                 Orbwalker.ForcedTarget = killableBarrel;
                                 return;
                             }
                         }
-                        if (maxChain > 2)
+                        if (maxChain <= 2) continue;
                         {
-                            foreach (var barrels2 in BarrelManager.Barrels.Where(a => a.Distance(barrels) < 350))
+                            foreach (var killableBarrel2 in BarrelManager.Barrels.Where(a => a.Distance(barrels) < 350).Select(barrels2 => BarrelManager.Killablebarrels.Where(
+                                a => a.Distance(Player.Instance) < SpellManager.Q.Range)
+                                .FirstOrDefault(a => a.Distance(barrels2) < 700)).Where(killableBarrel2 => killableBarrel2 != null))
                             {
-                                var killableBarrel2 =
-                                    BarrelManager.Killablebarrels.Where(
-                                        a => a.Distance(Player.Instance) < SpellManager.Q.Range)
-                                        .FirstOrDefault(a => a.Distance(barrels2) < 700);
-                                if (killableBarrel2 != null)
+                                if (SpellManager.Q.IsReady())
                                 {
-                                    if (SpellManager.Q.IsReady())
-                                    {
-                                        SpellManager.Q.Cast(killableBarrel2);
-                                        return;
-                                    }
-                                    else if (killableBarrel2.Distance(Player.Instance) < Player.Instance.GetAutoAttackRange(killableBarrel2))
-                                    {
-                                        Orbwalker.ForcedTarget = killableBarrel2;
-                                        return;
-                                    }
+                                    SpellManager.Q.Cast(killableBarrel2);
+                                    return;
                                 }
+                                if (
+                                    !(killableBarrel2.Distance(Player.Instance) <
+                                      Player.Instance.GetAutoAttackRange(killableBarrel2))) continue;
+                                Orbwalker.ForcedTarget = killableBarrel2;
+                                return;
                             }
                         }
                     }
@@ -121,34 +116,28 @@ namespace GangplankBuddy
                                 SpellManager.Q.Cast(killableBarrel);
                                 return;
                             }
-                            else if (killableBarrel.Distance(Player.Instance) < Player.Instance.GetAutoAttackRange(killableBarrel))
-                            {
-                                Orbwalker.ForcedTarget = killableBarrel;
-                                return;
-                            }
+                            if (
+                                !(killableBarrel.Distance(Player.Instance) <
+                                  Player.Instance.GetAutoAttackRange(killableBarrel))) return;
+                            Orbwalker.ForcedTarget = killableBarrel;
                             return;
                         }
-                        if (maxChain > 2)
+                        if (maxChain <= 2) continue;
                         {
-                            foreach (var barrels2 in BarrelManager.Barrels.Where(a => a.Distance(barrels) < 350))
+                            foreach (var killableBarrel2 in BarrelManager.Barrels.Where(a => a.Distance(barrels) < 350).Select(barrels2 => BarrelManager.Killablebarrels.Where(
+                                a => a.Distance(Player.Instance) < SpellManager.Q.Range)
+                                .FirstOrDefault(a => a.Distance(barrels2) < 700)).Where(killableBarrel2 => killableBarrel2 != null))
                             {
-                                var killableBarrel2 =
-                                    BarrelManager.Killablebarrels.Where(
-                                        a => a.Distance(Player.Instance) < SpellManager.Q.Range)
-                                        .FirstOrDefault(a => a.Distance(barrels2) < 700);
-                                if (killableBarrel2 != null)
+                                if (SpellManager.Q.IsReady())
                                 {
-                                    if (SpellManager.Q.IsReady())
-                                    {
-                                        SpellManager.Q.Cast(killableBarrel2);
-                                        return;
-                                    }
-                                    else if (killableBarrel2.Distance(Player.Instance) < Player.Instance.GetAutoAttackRange(killableBarrel2))
-                                    {
-                                        Orbwalker.ForcedTarget = killableBarrel2;
-                                        return;
-                                    }
+                                    SpellManager.Q.Cast(killableBarrel2);
+                                    return;
                                 }
+                                if (
+                                    !(killableBarrel2.Distance(Player.Instance) <
+                                      Player.Instance.GetAutoAttackRange(killableBarrel2))) continue;
+                                Orbwalker.ForcedTarget = killableBarrel2;
+                                return;
                             }
                         }
                     }
@@ -178,7 +167,7 @@ namespace GangplankBuddy
                             a.Distance(Player.Instance) > Player.Instance.GetAutoAttackRange(a) &&
                             !a.BaseSkinName.ToLower().Contains("gang") &&
                             Player.Instance.Distance(a) <= SpellManager.Q.Range && a.IsEnemy &&
-                            a.Health <= GPDmg.QDamage(a));
+                            a.Health <= GpDmg.QDamage(a));
             if (minion == null) return;
             SpellManager.Q.Cast(minion);
         }
@@ -195,7 +184,7 @@ namespace GangplankBuddy
                                 EntityManager.MinionsAndMonsters.EnemyMinions.Count(
                                     b =>
                                         b.Distance(killableBarrel) < 350 &&
-                                        b.Health < GPDmg.EDamage(b, GPDmg.QDamage(b))) >
+                                        b.Health < GpDmg.EDamage(b, GpDmg.QDamage(b))) >
                                 Program.FarmingMenu["useEQKillMin"].Cast<Slider>().CurrentValue))
                 {
                     SpellManager.Q.Cast(killableBarrel);
@@ -212,11 +201,9 @@ namespace GangplankBuddy
                             a => a.Distance(Player.Instance) < SpellManager.E.Range))
                 {
                     var count2 = EntityManager.MinionsAndMonsters.EnemyMinions.Count(a => a.Distance(source) < 350);
-                    if (count2 > count)
-                    {
-                        count = count2;
-                        target = source;
-                    }
+                    if (count2 <= count) continue;
+                    count = count2;
+                    target = source;
                 }
                 if (target != null && count >= Program.FarmingMenu["useEWaveClearMin"].Cast<Slider>().CurrentValue &&
                     !BarrelManager.Killablebarrels.Any(a => a.Distance(target.Position) < 350) &&
@@ -229,7 +216,7 @@ namespace GangplankBuddy
             var minion =
                 EntityManager.MinionsAndMonsters.EnemyMinions.FirstOrDefault(
                     a =>
-                        a.Health < GPDmg.QDamage(a) &&
+                        a.Health < GpDmg.QDamage(a) &&
                         a.IsValidTarget(SpellManager.Q.Range));
             if (Program.FarmingMenu["useQWaveClear"].Cast<CheckBox>().CurrentValue && SpellManager.Q.IsReady() &&
                 minion != null)

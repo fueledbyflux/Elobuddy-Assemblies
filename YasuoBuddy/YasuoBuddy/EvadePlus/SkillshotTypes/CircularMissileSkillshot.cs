@@ -22,9 +22,9 @@ namespace YasuoBuddy.EvadePlus.SkillshotTypes
             TimeDetected = Environment.TickCount;
         }
 
-        public Vector3 Position { get; private set; }
+        private Vector3 Position { get; set; }
 
-        public MissileClient Missile
+        private MissileClient Missile
         {
             get { return SpawnObject as MissileClient; }
         }
@@ -74,36 +74,29 @@ namespace YasuoBuddy.EvadePlus.SkillshotTypes
         {
             var missile = obj as MissileClient;
 
-            if (SpawnObject == null && missile != null)
+            if (SpawnObject != null || missile == null) return;
+            if (missile.SData.Name == SpellData.MissileSpellName && missile.SpellCaster.Index == Caster.Index)
             {
-                if (missile.SData.Name == SpellData.MissileSpellName && missile.SpellCaster.Index == Caster.Index)
-                {
-                    // Force skillshot to be removed
-                    IsValid = false;
-                }
+                // Force skillshot to be removed
+                IsValid = false;
             }
         }
 
         public override bool OnDelete(GameObject obj)
         {
-            if (Missile != null && obj.Index == Missile.Index && !string.IsNullOrEmpty(SpellData.ToggleParticleName))
-            {
-                MissileDeleted = true;
-                return false;
-            }
-
-            return true;
+            if (Missile == null || obj.Index != Missile.Index || string.IsNullOrEmpty(SpellData.ToggleParticleName))
+                return true;
+            MissileDeleted = true;
+            return false;
         }
 
         public override void OnDeleteObject(GameObject obj)
         {
-            if (Missile != null && MissileDeleted && !string.IsNullOrEmpty(SpellData.ToggleParticleName))
+            if (Missile == null || !MissileDeleted || string.IsNullOrEmpty(SpellData.ToggleParticleName)) return;
+            var r = new Regex(SpellData.ToggleParticleName);
+            if (r.Match(obj.Name).Success && obj.Distance(Position, true) <= 100*100)
             {
-                var r = new Regex(SpellData.ToggleParticleName);
-                if (r.Match(obj.Name).Success && obj.Distance(Position, true) <= 100*100)
-                {
-                    IsValid = false;
-                }
+                IsValid = false;
             }
         }
 

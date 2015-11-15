@@ -7,10 +7,10 @@ using YasuoBuddy.EvadePlus.SkillshotTypes;
 
 namespace YasuoBuddy.EvadePlus
 {
-    internal class EvadeMenu
+    internal static class EvadeMenu
     {
         public static Menu MainMenu { get; private set; }
-        public static Menu SkillshotMenu { get; private set; }
+        private static Menu SkillshotMenu { get; set; }
         public static Menu SpellMenu { get; private set; }
         public static Menu DrawMenu { get; private set; }
         public static Menu ControlsMenu { get; private set; }

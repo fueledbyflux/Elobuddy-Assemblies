@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 
 namespace KenchUnbenched
 {
-    class TahmDamage
+    internal static class TahmDamage
     {
         public static float QDamage(Obj_AI_Base target)
         {

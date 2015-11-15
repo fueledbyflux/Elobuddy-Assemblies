@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -10,13 +6,12 @@ using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
 using EloBuddy.SDK.Menu.Values;
 using EloBuddy.SDK.Rendering;
-using SharpDX;
 
 namespace KenchUnbenched
 {
-    static class KenchUnbenched
+    internal static class KenchUnbenched
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Loading.OnLoadingComplete += Loading_OnLoadingComplete;
         }
@@ -26,7 +21,7 @@ namespace KenchUnbenched
         public static Spell.Skillshot QSpell = new Spell.Skillshot(SpellSlot.Q, 800, SkillShotType.Linear, 100, 2000, 75);
         public static Spell.Targeted WSpellSwallow = new Spell.Targeted(SpellSlot.W, 250);
         public static Spell.Skillshot WSpellSpit = new Spell.Skillshot(SpellSlot.W, 900, SkillShotType.Linear, 100, 900, 75);
-        public static Spell.Active ESpell = new Spell.Active(SpellSlot.E);
+        private static Spell.Active ESpell = new Spell.Active(SpellSlot.E);
 
         private static void Loading_OnLoadingComplete(EventArgs args)
         {
