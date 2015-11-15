@@ -9,14 +9,14 @@ using SharpDX;
 
 namespace LeeSinBuddy
 {
-    internal class WardJumper
+    internal static class WardJumper
     {
         //WardJump
         private static long _lastCheck;
         public static long LastWard;
         private static Vector3 _jumpPos;
-        public static bool WardjumpActive;
-        public static Menu WardjumpMenu;
+        private static bool WardjumpActive;
+        private static Menu WardjumpMenu;
         private static AIHeroClient _Player
         {
             get { return ObjectManager.Player; }
@@ -66,11 +66,9 @@ namespace LeeSinBuddy
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            if (WardjumpActive && WardjumpMenu["drawWJ"].Cast<CheckBox>().CurrentValue)
-            {
-                Circle.Draw(Color.Teal, 100, _jumpPos);
-                Circle.Draw(Color.White, 600, _Player.Position);
-            }
+            if (!WardjumpActive || !WardjumpMenu["drawWJ"].Cast<CheckBox>().CurrentValue) return;
+            Circle.Draw(Color.Teal, 100, _jumpPos);
+            Circle.Draw(Color.White, 600, _Player.Position);
         }
 
         public static void WardJump(Vector3 pos, bool max, bool cursorOnly)
@@ -98,12 +96,10 @@ namespace LeeSinBuddy
                     .FirstOrDefault(a => a.IsAlly && a.Distance(_jumpPos) < 100);
             if (ward != null)
             {
-                if (Program.W.IsReady() && Program.W.Instance().Name == Program.Spells["W1"] &&
-                    Program.LastCast[Program.Spells["W1"]] + 500 < Environment.TickCount)
-                {
-                    Player.CastSpell(SpellSlot.W, ward);
-                    Program.LastCast[Program.Spells["W1"]] = Environment.TickCount;
-                }
+                if (!Program.W.IsReady() || Program.W.Instance().Name != Program.Spells["W1"] ||
+                    Program.LastCast[Program.Spells["W1"]] + 500 >= Environment.TickCount) return;
+                Player.CastSpell(SpellSlot.W, ward);
+                Program.LastCast[Program.Spells["W1"]] = Environment.TickCount;
             }
             else
             {
@@ -112,17 +108,15 @@ namespace LeeSinBuddy
                 {
                     return;
                 }
-                if (Program.W.IsReady() && Program.W.Instance().Name == Program.Spells["W1"] &&
-                    Program.LastCast[Program.Spells["W1"]] + 500 < Environment.TickCount &&
-                    LastWard + 400 < Environment.TickCount)
-                {
-                    GetWardSlot().Cast(_jumpPos);
-                    LastWard = Environment.TickCount;
-                }
+                if (!Program.W.IsReady() || Program.W.Instance().Name != Program.Spells["W1"] ||
+                    Program.LastCast[Program.Spells["W1"]] + 500 >= Environment.TickCount ||
+                    LastWard + 400 >= Environment.TickCount) return;
+                GetWardSlot().Cast(_jumpPos);
+                LastWard = Environment.TickCount;
             }
         }
 
-        public static ItemId[] WardIds = {ItemId.Warding_Totem_Trinket, ItemId.Greater_Stealth_Totem_Trinket, ItemId.Greater_Vision_Totem_Trinket, ItemId.Sightstone, ItemId.Ruby_Sightstone, (ItemId) 2301, (ItemId)2302, (ItemId)2303,
+        private static ItemId[] WardIds = {ItemId.Warding_Totem_Trinket, ItemId.Greater_Stealth_Totem_Trinket, ItemId.Greater_Vision_Totem_Trinket, ItemId.Sightstone, ItemId.Ruby_Sightstone, (ItemId) 2301, (ItemId)2302, (ItemId)2303,
                 (ItemId) 3711, (ItemId) 1411, (ItemId) 1410, (ItemId) 1408, (ItemId) 1409};
 
 

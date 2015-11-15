@@ -14,32 +14,25 @@ namespace YasuoBuddy.EvadePlus
             var dangerValue = evade.GetDangerValue();
             var flashDangerValue = EvadeMenu.SpellMenu["flash"].Cast<Slider>().CurrentValue;
 
-            if (flashDangerValue > 0 && flashDangerValue <= dangerValue)
-            {
-                var castPos = GetBlinkCastPos(evade, Player.Instance.ServerPosition.To2D(), 425);
-                var slot = GetFlashSpellSlot();
+            if (flashDangerValue <= 0 || flashDangerValue > dangerValue) return false;
+            var castPos = GetBlinkCastPos(evade, Player.Instance.ServerPosition.To2D(), 425);
+            var slot = GetFlashSpellSlot();
 
-                if (!castPos.IsZero && slot != SpellSlot.Unknown && Player.CanUseSpell(slot) == SpellState.Ready)
-                {
-                    //Player.IssueOrder(GameObjectOrder.Stop, Player.Instance.Position, true);
-                    Player.CastSpell(slot, castPos.To3DWorld());
-                    return true;
-                }
-            }
-
-            return false;
+            if (castPos.IsZero || slot == SpellSlot.Unknown || Player.CanUseSpell(slot) != SpellState.Ready)
+                return false;
+            //Player.IssueOrder(GameObjectOrder.Stop, Player.Instance.Position, true);
+            Player.CastSpell(slot, castPos.To3DWorld());
+            return true;
         }
 
-        public static SpellSlot GetFlashSpellSlot()
+        private static SpellSlot GetFlashSpellSlot()
         {
             if (Player.GetSpell(SpellSlot.Summoner1).Name == "summonerflash")
                 return SpellSlot.Summoner1;
-            if (Player.GetSpell(SpellSlot.Summoner2).Name == "summonerflash")
-                return SpellSlot.Summoner2;
-            return SpellSlot.Unknown;
+            return Player.GetSpell(SpellSlot.Summoner2).Name == "summonerflash" ? SpellSlot.Summoner2 : SpellSlot.Unknown;
         }
 
-        public static Vector2 GetBlinkCastPos(EvadePlus evade, Vector2 center, float maxRange)
+        private static Vector2 GetBlinkCastPos(EvadePlus evade, Vector2 center, float maxRange)
         {
             var polygons = evade.ClippedPolygons.Where(p => p.IsInside(center)).ToArray();
             var segments = new List<Vector2[]>();
@@ -56,23 +49,24 @@ namespace YasuoBuddy.EvadePlus
                             .Where(p => p.IsInLineSegment(start, end))
                             .ToList();
 
-                    if (intersections.Count == 0)
+                    switch (intersections.Count)
                     {
-                        if (start.Distance(center, true) < maxRange.Pow() &&
-                            end.Distance(center, true) < maxRange.Pow())
-                        {
-                            intersections = new[] {start, end}.ToList();
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-                    else if (intersections.Count == 1)
-                    {
-                        intersections.Add(center.Distance(start, true) > center.Distance(end, true)
-                            ? end
-                            : start);
+                        case 0:
+                            if (start.Distance(center, true) < maxRange.Pow() &&
+                                end.Distance(center, true) < maxRange.Pow())
+                            {
+                                intersections = new[] {start, end}.ToList();
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                            break;
+                        case 1:
+                            intersections.Add(center.Distance(start, true) > center.Distance(end, true)
+                                ? end
+                                : start);
+                            break;
                     }
 
                     segments.Add(intersections.ToArray());
@@ -98,7 +92,7 @@ namespace YasuoBuddy.EvadePlus
                     dist = maxdist;
                 }
 
-                var step = maxdist/division;
+                const int step = maxdist/division;
                 var count = dist/step;
 
                 for (var i = 0; i < count; i++)

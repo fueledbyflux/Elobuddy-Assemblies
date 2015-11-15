@@ -1,20 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
-using EloBuddy.SDK.Rendering;
 using SharpDX;
-using Color = System.Drawing.Color;
 
 namespace YasuoBuddy
 {
-    static class DashingManager
+    internal static class DashingManager
     {
 
         public static void Init()
@@ -52,11 +45,11 @@ namespace YasuoBuddy
 
         public static Obj_AI_Base GetClosestEUnit(Vector3 pos)
         {
-            int distance = 250000;
+            var distance = 250000;
             Obj_AI_Base unit = null;
             foreach (var source in EntityManager.MinionsAndMonsters.CombinedAttackable.Where(a => a.CanDash() && !a.IsDead && a.Health > 0 && a.Distance(Player.Instance) < 475))
             {
-                int dist = (int) source.GetDashPos().Distance(pos);
+                var dist = (int) source.GetDashPos().Distance(pos);
                 if (dist >= distance) continue;
                 distance = dist;
                 unit = source;
@@ -67,7 +60,7 @@ namespace YasuoBuddy
                     EntityManager.Heroes.Enemies.Where(
                         a => a.CanDash() && !a.IsDead && a.Health > 0 && a.Distance(Player.Instance) < 475))
             {
-                int dist = (int) source.GetDashPos().Distance(pos);
+                var dist = (int) source.GetDashPos().Distance(pos);
                 if (dist >= distance) continue;
                 distance = dist;
                 unit = source;
@@ -77,11 +70,11 @@ namespace YasuoBuddy
 
         public static Obj_AI_Base GetClosestEUnit(this Obj_AI_Base pos)
         {
-            int distance = 250000;
+            var distance = 250000;
             Obj_AI_Base unit = null;
             foreach (var source in EntityManager.MinionsAndMonsters.CombinedAttackable.Where(a =>a.CanDash() && !a.IsDead && a.Health > 0 && a.Distance(Player.Instance) < 475))
             {
-                int dist = (int)source.GetDashPos().Distance(pos);
+                var dist = (int)source.GetDashPos().Distance(pos);
                 if (dist >= distance) continue;
                 distance = dist;
                 unit = source;
@@ -92,7 +85,7 @@ namespace YasuoBuddy
                     EntityManager.Heroes.Enemies.Where(
                         a => a.CanDash() && !a.IsDead && a.Health > 0 && a.Distance(Player.Instance) < 475))
             {
-                int dist = (int)source.GetDashPos().Distance(pos);
+                var dist = (int)source.GetDashPos().Distance(pos);
                 if (dist >= distance) continue;
                 distance = dist;
                 unit = source;

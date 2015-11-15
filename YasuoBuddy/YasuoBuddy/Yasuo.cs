@@ -9,9 +9,12 @@ using YasuoBuddy.EvadePlus;
 
 namespace YasuoBuddy
 {
-    internal class Yasuo
+    internal static class Yasuo
     {
-        public static Menu Menu, ComboMenu, HarassMenu, FarmMenu, FleeMenu, DrawMenu, MiscSettings;
+        private static Menu Menu;
+        public static Menu ComboMenu, HarassMenu, FarmMenu, FleeMenu;
+        private static Menu DrawMenu;
+        public static Menu MiscSettings;
         private static int _cleanUpTime;
 
         private static void Main(string[] args)

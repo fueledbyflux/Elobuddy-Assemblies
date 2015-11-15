@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EloBuddy;
+﻿using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 
 namespace GangplankBuddy
 {
-    class SpellManager
+    internal static class SpellManager
     {
         public static Spell.Targeted Q = new Spell.Targeted(SpellSlot.Q, 625);
         public static Spell.Active W = new Spell.Active(SpellSlot.W);

@@ -13,14 +13,14 @@ namespace ActivatorBuddy.Items
 {
     internal static class ItemManager
     {
-        public static Menu PotionsMenu;
-        public static Menu OffensiveMenu;
+        private static Menu PotionsMenu;
+        private static Menu OffensiveMenu;
         public static Menu Offensive2Menu;
         public static Menu DefensiveMenu;
         public static Menu Summoners;
-        public static Menu Cleansers;
+        private static Menu Cleansers;
 
-        public static Dictionary<BuffType, string> BuffTypes = new Dictionary<BuffType, string>
+        private static Dictionary<BuffType, string> BuffTypes = new Dictionary<BuffType, string>
         {
             {BuffType.Stun, "stunActivator"},
             {BuffType.Polymorph, "polymorphActivator"},
@@ -31,7 +31,7 @@ namespace ActivatorBuddy.Items
             {BuffType.Fear, "fearActivator"}
         };
 
-        public static Item[] Items =
+        private static Item[] Items =
         {
             new Item("botrk", 450, CastType.Targeted, ItemId.Blade_of_the_Ruined_King, ItemType.Offensive),
             new Item("cutlass", 450, CastType.Targeted, ItemId.Bilgewater_Cutlass, ItemType.Offensive),
@@ -58,9 +58,9 @@ namespace ActivatorBuddy.Items
                 ItemType.Cleanse)
         };
 
-        public static Spell.Active Cleanse;
+        private static Spell.Active Cleanse;
 
-        public static List<Item> ActiveItems = new List<Item>();
+        private static List<Item> ActiveItems = new List<Item>();
 
         public static void Init()
         {
@@ -132,12 +132,9 @@ namespace ActivatorBuddy.Items
 
             Cleanse = SummonerSpells.HasSpell("summonerboost") ? new Spell.Active(Player.Instance.GetSpellSlotFromName("summonerboost"), int.MaxValue) : null;
 
-            foreach (var item in Items)
+            foreach (var item in Items.Where(item => ActiveItems.All(a => a.Name != item.Name) && Player.Instance.InventoryItems.Any(a => a.Id == item.Id)))
             {
-                if (ActiveItems.All(a => a.Name != item.Name) && Player.Instance.InventoryItems.Any(a => a.Id == item.Id))
-                {
-                    ActiveItems.Add(item);
-                }
+                ActiveItems.Add(item);
             }
 
             Game.OnTick += Game_OnTick;
@@ -156,19 +153,8 @@ namespace ActivatorBuddy.Items
             if (target == null) return;
                 
 
-            foreach (var item in ActiveItems)
+            foreach (var spellSlot in from item in ActiveItems where !Player.Instance.InventoryItems.All(a => a.Id != item.Id || !item.MeleeOnly) let menuItem = OffensiveMenu[item.Name + "Manager"].Cast<CheckBox>() let menuItemMe = OffensiveMenu[item.Name + "ManagerMinMeHP"].Cast<Slider>() let menuItemEnemy = OffensiveMenu[item.Name + "ManagerMinEnemyHP"].Cast<Slider>() where target.IsValidTarget() && !(target.Distance(Player.Instance) > item.Range) && menuItem.CurrentValue && !(menuItemMe.CurrentValue <= Player.Instance.HealthPercent) && !(menuItemEnemy.CurrentValue <= target.HealthPercent) select Player.Instance.InventoryItems.FirstOrDefault(a => a.Id == item.Id) into spellSlot where spellSlot != null && Player.GetSpell(spellSlot.SpellSlot).IsReady select spellSlot)
             {
-                if (Player.Instance.InventoryItems.All(a => a.Id != item.Id || !item.MeleeOnly)) continue;
-
-                var menuItem = OffensiveMenu[item.Name + "Manager"].Cast<CheckBox>();
-                var menuItemMe = OffensiveMenu[item.Name + "ManagerMinMeHP"].Cast<Slider>();
-                var menuItemEnemy = OffensiveMenu[item.Name + "ManagerMinEnemyHP"].Cast<Slider>();
-
-                if (!target.IsValidTarget() || target.Distance(Player.Instance) > item.Range || !menuItem.CurrentValue || menuItemMe.CurrentValue <= Player.Instance.HealthPercent || menuItemEnemy.CurrentValue <= target.HealthPercent)
-                    continue;
-
-                var spellSlot = Player.Instance.InventoryItems.FirstOrDefault(a => a.Id == item.Id);
-                if (spellSlot == null || !Player.GetSpell(spellSlot.SpellSlot).IsReady) continue;
                 Player.CastSpell(spellSlot.SpellSlot);
                 return;
             }
@@ -190,20 +176,16 @@ namespace ActivatorBuddy.Items
         {
             if (!sender.IsMe) return;
 
-            foreach (var item in Items)
+            foreach (var item in Items.Where(item => ActiveItems.All(a => a.Name != item.Name) && (ItemId) args.Id == item.Id))
             {
-                if (ActiveItems.All(a => a.Name != item.Name) && (ItemId) args.Id == item.Id)
-                {
-                    ActiveItems.Add(item);
-                }
+                ActiveItems.Add(item);
             }
         }
 
         private static void Game_OnTick(EventArgs args)
         {
-            foreach (var item in ActiveItems)
+            foreach (var item in ActiveItems.Where(item => !Player.Instance.InventoryItems.All(a => a.Id != item.Id || item.MeleeOnly)))
             {
-                if (Player.Instance.InventoryItems.All(a => a.Id != item.Id || item.MeleeOnly)) continue;
                 switch (item.ItemType)
                 {
                     case ItemType.Offensive:
@@ -217,7 +199,7 @@ namespace ActivatorBuddy.Items
                         var menuItemEnemy = OffensiveMenu[item.Name + "ManagerMinEnemyHP"].Cast<Slider>();
 
                         if (!target.IsValidTarget() || target.Distance(Player.Instance) > item.Range || 
-                        (item.MeleeOnly && !Player.Instance.IsMelee) || !menuItem.CurrentValue || menuItemMe.CurrentValue <= Player.Instance.HealthPercent || menuItemEnemy.CurrentValue <= target.HealthPercent) continue;
+                            (item.MeleeOnly && !Player.Instance.IsMelee) || !menuItem.CurrentValue || menuItemMe.CurrentValue <= Player.Instance.HealthPercent || menuItemEnemy.CurrentValue <= target.HealthPercent) continue;
 
                         switch (item.CastType)
                         {
@@ -285,28 +267,26 @@ namespace ActivatorBuddy.Items
                         }
                     }
                         break;
+                    case ItemType.Defensive:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
 
-            if (Cleansers["summonerSpellCleanse"].Cast<CheckBox>().CurrentValue && Cleanse != null && Cleanse.IsReady())
+            if (!Cleansers["summonerSpellCleanse"].Cast<CheckBox>().CurrentValue || Cleanse == null ||
+                !Cleanse.IsReady()) return;
             {
-                foreach (var buffInstance in Player.Instance.Buffs)
+                foreach (var buffInstance in Player.Instance.Buffs.Where(buffInstance => BuffTypes.ContainsKey(buffInstance.Type) && Cleansers[BuffTypes[buffInstance.Type]].Cast<CheckBox>().CurrentValue))
                 {
-                    if (BuffTypes.ContainsKey(buffInstance.Type) &&
-                        Cleansers[BuffTypes[buffInstance.Type]].Cast<CheckBox>().CurrentValue)
-                    {
-                        Player.CastSpell(Cleanse.Slot);
-                    }
+                    Player.CastSpell(Cleanse.Slot);
                 }
             }
         }
 
         public static bool HasBuff(this Obj_AI_Base unit, string s)
         {
-            return
-                unit.Buffs.Any(
-                    a =>
-                        a.Name.ToLower().Contains(s.ToLower()) || a.DisplayName.ToLower().Contains(s.ToLower()));
+            return unit.Buffs.Any(a => a.Name.ToLower().Contains(s.ToLower()) || a.DisplayName.ToLower().Contains(s.ToLower()));
         }
     }
 }

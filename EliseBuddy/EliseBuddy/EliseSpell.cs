@@ -16,10 +16,10 @@ namespace EliseBuddy
             SpellName = s;
         }
 
-        public string SpellName { get; set; }
+        private string SpellName { get; set; }
     }
 
-    internal class EliseSpellManager
+    internal static class EliseSpellManager
     {
         public static Dictionary<string, EliseSpell> SpellCasts = new Dictionary<string, EliseSpell>
         {

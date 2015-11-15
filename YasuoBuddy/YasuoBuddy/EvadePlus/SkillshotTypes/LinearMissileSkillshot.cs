@@ -20,41 +20,25 @@ namespace YasuoBuddy.EvadePlus.SkillshotTypes
             TimeDetected = Environment.TickCount;
         }
 
-        internal Vector3 _startPos;
-        internal Vector3 _endPos;
+        private Vector3 _startPos;
+        private Vector3 _endPos;
 
-        public MissileClient Missile
+        private MissileClient Missile
         {
             get { return SpawnObject as MissileClient; }
         }
 
-        public Vector3 StartPosition
+        private Vector3 StartPosition
         {
-            get
-            {
-                if (Missile == null)
-                {
-                    return _startPos;
-                }
-                else
-                {
-                    return Missile.Position;
-                }
+            get {
+                return Missile == null ? _startPos : Missile.Position;
             }
         }
 
-        public Vector3 EndPosition
+        private Vector3 EndPosition
         {
-            get
-            {
-                if (Missile == null)
-                {
-                    return _endPos;
-                }
-                else
-                {
-                    return Missile.StartPosition.ExtendVector3(Missile.EndPosition, SpellData.Range);
-                }
+            get {
+                return Missile == null ? _endPos : Missile.StartPosition.ExtendVector3(Missile.EndPosition, SpellData.Range);
             }
         }
 
@@ -73,12 +57,10 @@ namespace YasuoBuddy.EvadePlus.SkillshotTypes
         {
             var missile = obj as MissileClient;
 
-            if (SpawnObject == null && missile != null)
+            if (SpawnObject != null || missile == null) return;
+            if (missile.SData.Name == SpellData.MissileSpellName && missile.SpellCaster.Index == Caster.Index)
             {
-                if (missile.SData.Name == SpellData.MissileSpellName && missile.SpellCaster.Index == Caster.Index)
-                {
-                    IsValid = false;
-                }
+                IsValid = false;
             }
         }
 

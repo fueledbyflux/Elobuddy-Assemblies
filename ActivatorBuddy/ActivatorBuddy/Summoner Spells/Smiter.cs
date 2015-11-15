@@ -1,11 +1,10 @@
 ﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
-using SharpDX;
 
 namespace ActivatorBuddy.Summoner_Spells
 {
-    class Smiter
+    internal static class Smiter
     {
         public static readonly string[] SmiteableUnits =
         {
@@ -33,7 +32,7 @@ namespace ActivatorBuddy.Summoner_Spells
 
         public static int GetSmiteDamage()
         {
-            int level = ObjectManager.Player.Level;
+            var level = ObjectManager.Player.Level;
             int[] smitedamage =
             {
                 20*level + 370,

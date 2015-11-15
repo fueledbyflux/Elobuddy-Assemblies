@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using ActivatorBuddy.Defencives;
@@ -11,7 +10,7 @@ using EloBuddy.SDK.Rendering;
 
 namespace ActivatorBuddy.Summoner_Spells
 {
-    internal class SummonerSpells
+    internal static class SummonerSpells
     {
         private static Spell.Targeted _ignite;
         private static Spell.Targeted _heal;
@@ -116,12 +115,9 @@ namespace ActivatorBuddy.Summoner_Spells
             if (!_summonerMenu["useBarrier"].Cast<CheckBox>().CurrentValue || _summonerMenu["comboOnlyBarrier"].Cast<CheckBox>().CurrentValue &&
                 !Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
                 return;
-            if (Player.Instance.InDanger(true) &&
-                Player.Instance.PredictedHealth() + 95 + (20*Player.Instance.Level) > 0)
-            {
-                _barrier.Cast();
-                return;
-            }
+            if (!Player.Instance.InDanger(true) ||
+                !(Player.Instance.PredictedHealth() + 95 + (20*Player.Instance.Level) > 0)) return;
+            _barrier.Cast();
         }
 
         private static void SmiteEvent(EventArgs args)
@@ -157,9 +153,9 @@ namespace ActivatorBuddy.Summoner_Spells
                     return;
                 }
             }
-            if (_smiteMenu["comboWithDuelSmite"].Cast<CheckBox>().CurrentValue &&
-                Smite.Handle.Name == "s5_summonersmiteduel" &&
-                Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
+            if (!_smiteMenu["comboWithDuelSmite"].Cast<CheckBox>().CurrentValue ||
+                Smite.Handle.Name != "s5_summonersmiteduel" ||
+                !Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo)) return;
             {
                 foreach (
                     var target in

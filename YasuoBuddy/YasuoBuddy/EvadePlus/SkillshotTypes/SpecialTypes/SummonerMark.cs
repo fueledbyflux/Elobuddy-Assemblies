@@ -24,33 +24,17 @@ namespace YasuoBuddy.EvadePlus.SkillshotTypes.SpecialTypes
         private Vector3 _castEndPos;
         private Vector3 _endPos;
 
-        public Vector3 StartPosition
+        private Vector3 StartPosition
         {
-            get
-            {
-                if (SpawnObject == null)
-                {
-                    return _castStartPos;
-                }
-                else
-                {
-                    return SpawnObject.Position;
-                }
+            get {
+                return SpawnObject == null ? _castStartPos : SpawnObject.Position;
             }
         }
 
-        public Vector3 EndPosition
+        private Vector3 EndPosition
         {
-            get
-            {
-                if (SpawnObject == null)
-                {
-                    return _castEndPos;
-                }
-                else
-                {
-                    return _endPos;
-                }
+            get {
+                return SpawnObject == null ? _castEndPos : _endPos;
             }
         }
 
@@ -67,14 +51,9 @@ namespace YasuoBuddy.EvadePlus.SkillshotTypes.SpecialTypes
 
         public override void OnCreate(GameObject obj)
         {
-            if (obj == null)
-            {
-                _castStartPos = Caster.Position;
-                _castEndPos = _castStartPos.ExtendVector3(CastArgs.End, SpellData.Range);
-            }
-            else
-            {
-            }
+            if (obj != null) return;
+            _castStartPos = Caster.Position;
+            _castEndPos = _castStartPos.ExtendVector3(CastArgs.End, SpellData.Range);
         }
 
         public override void OnCreateObject(GameObject obj)
@@ -90,13 +69,11 @@ namespace YasuoBuddy.EvadePlus.SkillshotTypes.SpecialTypes
                 }
             }
 
-            if (SpawnObject != null)
+            if (SpawnObject == null) return;
+            if (Utils.GetGameObjectName(obj) == SpellData.ToggleParticleName &&
+                obj.Distance(SpawnObject, true) <= 300.Pow())
             {
-                if (Utils.GetGameObjectName(obj) == SpellData.ToggleParticleName &&
-                    obj.Distance(SpawnObject, true) <= 300.Pow())
-                {
-                    IsValid = false;
-                }
+                IsValid = false;
             }
         }
 

@@ -13,11 +13,11 @@ namespace YasuoBuddy.EvadePlus
 {
     public static class AutoPathing
     {
-        public static Vector2[] Path { get; private set; }
-        public static bool IsPathing { get; private set; }
-        public static int Index;
+        private static Vector2[] Path { get; set; }
+        private static bool IsPathing { get; set; }
+        private static int Index;
 
-        public static Vector2 CurrentPoint
+        private static Vector2 CurrentPoint
         {
             get { return Path[Index]; }
         }
@@ -35,7 +35,7 @@ namespace YasuoBuddy.EvadePlus
             }
         }
 
-        public static float SwitchDistance
+        private static float SwitchDistance
         {
             get { return (Game.Ping)*Player.Instance.MoveSpeed/1000 + 90; }
         }
@@ -79,13 +79,13 @@ namespace YasuoBuddy.EvadePlus
             }
         }
 
-        public static void StopPath()
+        private static void StopPath()
         {
             Path = null;
             IsPathing = false;
         }
 
-        public static void DoPath(Vector2[] path)
+        private static void DoPath(Vector2[] path)
         {
             if (path == null || path.Length == 0)
                 return;

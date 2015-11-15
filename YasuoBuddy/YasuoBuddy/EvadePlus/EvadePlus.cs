@@ -48,12 +48,12 @@ namespace YasuoBuddy.EvadePlus
             get { return EvadeMenu.MainMenu["moveToInitialPosition"].Cast<CheckBox>().CurrentValue; }
         }
 
-        public bool DisableDrawings
+        private static bool DisableDrawings
         {
             get { return EvadeMenu.DrawMenu["disableAllDrawings"].Cast<CheckBox>().CurrentValue; }
         }
 
-        public bool DrawEvadePoint
+        private static bool DrawEvadePoint
         {
             get { return EvadeMenu.DrawMenu["drawEvadePoint"].Cast<CheckBox>().CurrentValue; }
         }
@@ -63,12 +63,12 @@ namespace YasuoBuddy.EvadePlus
             get { return EvadeMenu.DrawMenu["drawEvadeStatus"].Cast<CheckBox>().CurrentValue; }
         }
 
-        public bool DrawDangerPolygon
+        private static bool DrawDangerPolygon
         {
             get { return EvadeMenu.DrawMenu["drawDangerPolygon"].Cast<CheckBox>().CurrentValue; }
         }
 
-        public int IssueOrderTickLimit
+        private static int IssueOrderTickLimit
         {
             get { return 90; }
         }
@@ -76,8 +76,8 @@ namespace YasuoBuddy.EvadePlus
         public SkillshotDetector SkillshotDetector { get; private set; }
         //public PathFinding PathFinding { get; private set; }
 
-        public EvadeSkillshot[] Skillshots { get; private set; }
-        public Geometry.Polygon[] Polygons { get; private set; }
+        private EvadeSkillshot[] Skillshots { get; set; }
+        private Geometry.Polygon[] Polygons { get; set; }
         public List<Geometry.Polygon> ClippedPolygons { get; private set; }
         public Vector2 LastIssueOrderPos;
 
@@ -119,16 +119,16 @@ namespace YasuoBuddy.EvadePlus
             CacheSkillshots();
         }
 
-        private void OnSkillshotDetected(EvadeSkillshot skillshot, bool isProcessSpell)
+        private static void OnSkillshotDetected(EvadeSkillshot skillshot, bool isProcessSpell)
         {
             
         }
 
-        private void OnSkillshotDeleted(EvadeSkillshot skillshot)
+        private static void OnSkillshotDeleted(EvadeSkillshot skillshot)
         {
         }
 
-        private void Ontick(EventArgs args)
+        private static void Ontick(EventArgs args)
         {
 
         }
@@ -158,15 +158,13 @@ namespace YasuoBuddy.EvadePlus
                 }
             }
 
-            if (DrawDangerPolygon)
+            if (!DrawDangerPolygon) return;
+            foreach (
+                var pol in
+                    Geometry.ClipPolygons(SkillshotDetector.ActiveSkillshots.Select(c => c.ToPolygon()))
+                        .ToPolygons())
             {
-                foreach (
-                    var pol in
-                        Geometry.ClipPolygons(SkillshotDetector.ActiveSkillshots.Select(c => c.ToPolygon()))
-                            .ToPolygons())
-                {
-                    pol.DrawPolygon(Color.Red, 2);
-                }
+                pol.DrawPolygon(Color.Red, 2);
             }
         }
 
@@ -206,17 +204,17 @@ namespace YasuoBuddy.EvadePlus
             return Geometry.ClipPolygons(Polygons).ToPolygons();
         }
 
-        public bool IsPointSafe(Vector2 point)
+        private bool IsPointSafe(Vector2 point)
         {
             return !ClippedPolygons.Any(p => p.IsInside(point));
         }
 
-        public bool IsPointSafe(List<Geometry.Polygon> poly, Vector2 point)
+        public static bool IsPointSafe(IEnumerable<Geometry.Polygon> poly, Vector2 point)
         {
             return !poly.Any(p => p.IsInside(point));
         }
 
-        public bool IsPathSafe(Vector2[] path)
+        private bool IsPathSafe(Vector2[] path)
         {
             for (var i = 0; i < path.Length - 1; i++)
             {
@@ -245,7 +243,7 @@ namespace YasuoBuddy.EvadePlus
             return !IsPointSafe(hero.ServerPosition.To2D());
         }
 
-        public int GetTimeAvailable(AIHeroClient hero = null)
+        private int GetTimeAvailable(AIHeroClient hero = null)
         {
             hero = hero ?? Player.Instance;
             var skillshots = Skillshots.Where(c => _skillshotPolygonCache[c].IsInside(hero.Position)).ToArray();
@@ -294,23 +292,24 @@ namespace YasuoBuddy.EvadePlus
                             .Where(p => p.IsInLineSegment(start, end))
                             .ToList();
 
-                    if (intersections.Count == 0)
+                    switch (intersections.Count)
                     {
-                        if (start.Distance(playerPos, true) < moveRadius.Pow() &&
-                            end.Distance(playerPos, true) < moveRadius.Pow())
-                        {
-                            intersections = new[] {start, end}.ToList();
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-                    else if (intersections.Count == 1)
-                    {
-                        intersections.Add(playerPos.Distance(start, true) > playerPos.Distance(end, true)
-                            ? end
-                            : start);
+                        case 0:
+                            if (start.Distance(playerPos, true) < moveRadius.Pow() &&
+                                end.Distance(playerPos, true) < moveRadius.Pow())
+                            {
+                                intersections = new[] {start, end}.ToList();
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                            break;
+                        case 1:
+                            intersections.Add(playerPos.Distance(start, true) > playerPos.Distance(end, true)
+                                ? end
+                                : start);
+                            break;
                     }
 
                     segments.Add(intersections.ToArray());
@@ -338,7 +337,7 @@ namespace YasuoBuddy.EvadePlus
                     dist = maxdist;
                 }
 
-                var step = maxdist/division;
+                const int step = maxdist/division;
                 var count = dist/step;
 
                 for (var i = 0; i < count; i++)
@@ -363,7 +362,7 @@ namespace YasuoBuddy.EvadePlus
             return new EvadeResult(this, evadePoint, anchor, maxTime, time, true);
         }
 
-        public Vector2 GetClosestPoint(Geometry.Polygon[] polygons, Vector2 from)
+        private static Vector2 GetClosestPoint(IEnumerable<Geometry.Polygon> polygons, Vector2 from)
         {
             var polPoints =
                 polygons.Select(pol => pol.ToDetailedPolygon())
@@ -409,7 +408,7 @@ namespace YasuoBuddy.EvadePlus
             return false;
         }
 
-        public bool MoveTo(Vector2 point, bool limit = true)
+        private bool MoveTo(Vector2 point, bool limit = true)
         {
             if (limit && EvadeIssurOrderTime + IssueOrderTickLimit > Environment.TickCount)
             {
@@ -436,13 +435,13 @@ namespace YasuoBuddy.EvadePlus
             private EvadePlus Evade;
             private int ExtraRange { get; set; }
 
-            public int Time { get; set; }
-            public Vector2 PlayerPos { get; set; }
-            public Vector2 EvadePoint { get; set; }
-            public Vector2 AnchorPoint { get; set; }
-            public int TimeAvailable { get; set; }
-            public int TotalTimeAvailable { get; set; }
-            public bool EnoughTime { get; set; }
+            private int Time { get; set; }
+            private Vector2 PlayerPos { get; set; }
+            private Vector2 EvadePoint { get; set; }
+            private Vector2 AnchorPoint { get; set; }
+            public int TimeAvailable { get; private set; }
+            private int TotalTimeAvailable { get; set; }
+            public bool EnoughTime { get; private set; }
 
             public bool IsValid
             {
@@ -455,12 +454,7 @@ namespace YasuoBuddy.EvadePlus
                 {
                     var walkPoint = EvadePoint.Extend(PlayerPos, -60);
                     var newPoint = walkPoint.Extend(PlayerPos, -ExtraRange);
-                    if (Evade.IsPointSafe(newPoint))
-                    {
-                        return newPoint.To3DWorld();
-                    }
-
-                    return walkPoint.To3DWorld();
+                    return Evade.IsPointSafe(newPoint) ? newPoint.To3DWorld() : walkPoint.To3DWorld();
                 }
             }
 
@@ -492,12 +486,12 @@ namespace YasuoBuddy.EvadePlus
                 return Elapsed(time);
             }
 
-            public bool Elapsed(int time)
+            private bool Elapsed(int time)
             {
                 return Elapsed() > time;
             }
 
-            public int Elapsed()
+            private int Elapsed()
             {
                 return Environment.TickCount - Time;
             }

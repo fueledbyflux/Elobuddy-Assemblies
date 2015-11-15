@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EloBuddy;
-using EloBuddy.SDK;
-using SharpDX;
+﻿using EloBuddy;
 
 namespace YasuoBuddy.TargetedSpells
 {
@@ -14,10 +7,10 @@ namespace YasuoBuddy.TargetedSpells
     
     public class TargetSpellData
     {
-        public string ChampionName { get; set; }
-        public SpellSlot Spellslot { get; set; }
-        public string Name { get; set; }
-        public int Delay { get; set; }
+        public string ChampionName { get; private set; }
+        public SpellSlot Spellslot { get; private set; }
+        public string Name { get; private set; }
+        public int Delay { get; private set; }
 
         public TargetSpellData(string champ, string spellname, SpellSlot slot, int delay = 0)
         {

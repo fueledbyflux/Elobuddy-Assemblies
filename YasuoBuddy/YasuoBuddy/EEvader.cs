@@ -5,18 +5,17 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Menu.Values;
 using SharpDX;
 using YasuoBuddy.EvadePlus;
-using YasuoBuddy.EvadePlus.SkillshotTypes;
 using Color = System.Drawing.Color;
 
 namespace YasuoBuddy
 {
-    class EEvader
+    internal static class EEvader
     {
         public static int WallCastT;
-        public static Vector2 YasuoWallCastedPos;
-        public static int WDelay;
-        public static GameObject Wall;
-        public static Geometry.Polygon.Rectangle WallPolygon;
+        private static Vector2 YasuoWallCastedPos;
+        private static int WDelay;
+        private static GameObject Wall;
+        private static Geometry.Polygon.Rectangle WallPolygon;
         private static int _resetWall;
 
         public static void Init()
@@ -47,14 +46,13 @@ namespace YasuoBuddy
 
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (sender.IsValid && sender.Team == ObjectManager.Player.Team && args.SData.Name == "YasuoWMovingWall")
-            {
-                EEvader.YasuoWallCastedPos = sender.ServerPosition.To2D();
-                _resetWall = Environment.TickCount + 4000;
-            }
+            if (!sender.IsValid || sender.Team != ObjectManager.Player.Team || args.SData.Name != "YasuoWMovingWall")
+                return;
+            YasuoWallCastedPos = sender.ServerPosition.To2D();
+            _resetWall = Environment.TickCount + 4000;
         }
 
-        public static void UpdateTask()
+        private static void UpdateTask()
         {
             if (Program.Evade == null) return;
             if (_resetWall - Environment.TickCount > 3400 && Wall != null)
@@ -73,29 +71,23 @@ namespace YasuoBuddy
             }
             if (Wall != null && YasuoWallCastedPos.IsValid() && WallPolygon != null)
             {
-                foreach (var activeSkillshot in Program.Evade.SkillshotDetector.ActiveSkillshots.Where(EvadeMenu.IsSkillshotW))
+                foreach (var activeSkillshot in Program.Evade.SkillshotDetector.ActiveSkillshots.Where(EvadeMenu.IsSkillshotW).Where(activeSkillshot => WallPolygon.IsInside(activeSkillshot.GetPosition())))
                 {
-                    if (WallPolygon.IsInside(activeSkillshot.GetPosition()))
-                    {
-                        activeSkillshot.IsValid = false;
-                    }
+                    activeSkillshot.IsValid = false;
                 }
             }
 
             Program.Evade.CacheSkillshots();
 
-            if (Program.Evade.IsHeroInDanger(Player.Instance))
+            if (!Program.Evade.IsHeroInDanger(Player.Instance)) return;
             {
                 if (Yasuo.FleeMenu["Evade.W"].Cast<CheckBox>().CurrentValue && Player.GetSpell(SpellSlot.W).State == SpellState.Ready)
                 {
-                    foreach (var activeSkillshot in Program.Evade.SkillshotDetector.ActiveSkillshots.Where(a => EvadeMenu.IsSkillshotW(a) && Environment.TickCount - a.TimeDetected >= Yasuo.FleeMenu["Evade.WDelay"].Cast<Slider>().CurrentValue))
+                    foreach (var activeSkillshot in Program.Evade.SkillshotDetector.ActiveSkillshots.Where(a => EvadeMenu.IsSkillshotW(a) && Environment.TickCount - a.TimeDetected >= Yasuo.FleeMenu["Evade.WDelay"].Cast<Slider>().CurrentValue).Where(activeSkillshot => activeSkillshot.ToPolygon().IsInside(Player.Instance)))
                     {
-                        if (activeSkillshot.ToPolygon().IsInside(Player.Instance))
-                        {
-                            Player.CastSpell(SpellSlot.W, activeSkillshot.GetPosition());
-                            WDelay = Environment.TickCount + 500;
-                            return;
-                        }
+                        Player.CastSpell(SpellSlot.W, activeSkillshot.GetPosition());
+                        WDelay = Environment.TickCount + 500;
+                        return;
                     }
                 }
 
@@ -111,12 +103,12 @@ namespace YasuoBuddy
                                 a => a.Team != Player.Instance.Team && a.Distance(Player.Instance) < 475 && a.CanDash()))
                     {
                         if(source.GetDashPos().IsUnderTower()) continue;
-                        if (Program.Evade.IsPointSafe(poly, source.GetDashPos().To2D()))
+                        if (EvadePlus.EvadePlus.IsPointSafe(poly, source.GetDashPos().To2D()))
                         {
                             int count = 0;
                             for (int i = 0; i < 10; i += 47)
                             {
-                                if(!Program.Evade.IsPointSafe(poly, Player.Instance.Position.Extend(source.GetDashPos(), i)))
+                                if(!EvadePlus.EvadePlus.IsPointSafe(poly, Player.Instance.Position.Extend(source.GetDashPos(), i)))
                                 {
                                     count ++;
                                 }
@@ -132,20 +124,18 @@ namespace YasuoBuddy
                                 a => a.IsEnemy && a.Distance(Player.Instance) < 475 && a.CanDash()))
                     {
                         if (source.GetDashPos().IsUnderTower()) continue;
-                        if (Program.Evade.IsPointSafe(poly, source.GetDashPos().To2D()))
+                        if (!EvadePlus.EvadePlus.IsPointSafe(poly, source.GetDashPos().To2D())) continue;
+                        var count = 0;
+                        for (var i = 0; i < 10; i += 47)
                         {
-                            int count = 0;
-                            for (int i = 0; i < 10; i += 47)
+                            if(!EvadePlus.EvadePlus.IsPointSafe(poly, Player.Instance.Position.Extend(source.GetDashPos(), i)))
                             {
-                                if(!Program.Evade.IsPointSafe(poly, Player.Instance.Position.Extend(source.GetDashPos(), i)))
-                                {
-                                    count ++;
-                                }
+                                count ++;
                             }
-                            if (count > 3) continue;
-                            Player.CastSpell(SpellSlot.E, source);
-                            break;
                         }
+                        if (count > 3) continue;
+                        Player.CastSpell(SpellSlot.E, source);
+                        break;
                     }
                 }
             }

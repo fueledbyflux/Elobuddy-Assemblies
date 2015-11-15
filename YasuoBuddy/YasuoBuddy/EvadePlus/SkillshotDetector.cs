@@ -29,31 +29,31 @@ namespace YasuoBuddy.EvadePlus
 
         #endregion
 
-        public DetectionTeam Detection;
+        private DetectionTeam Detection;
 
-        public readonly List<EvadeSkillshot> DetectedSkillshots = new List<EvadeSkillshot>();
+        private readonly List<EvadeSkillshot> DetectedSkillshots = new List<EvadeSkillshot>();
 
         public IEnumerable<EvadeSkillshot> ActiveSkillshots
         {
             get { return DetectedSkillshots.Where(c => EvadeMenu.IsSkillshotEnabled(c) && c.IsValid && c.IsActive); }
         }
 
-        public bool EnableFoWDetection
+        private static bool EnableFoWDetection
         {
             get { return EvadeMenu.MainMenu["fowDetection"].Cast<CheckBox>().CurrentValue; }
         }
 
-        public bool LimitDetectionRange
+        private static bool LimitDetectionRange
         {
             get { return EvadeMenu.MainMenu["limitDetectionRange"].Cast<CheckBox>().CurrentValue; }
         }
 
-        public int SkillshotActivationDelay
+        private static int SkillshotActivationDelay
         {
             get { return EvadeMenu.MainMenu["skillshotActivationDelay"].Cast<Slider>().CurrentValue; }
         }
 
-        public bool EnableSpellDetection
+        private static bool EnableSpellDetection
         {
             get { return EvadeMenu.MainMenu["processSpellDetection"].Cast<CheckBox>().CurrentValue; }
         }
@@ -70,7 +70,7 @@ namespace YasuoBuddy.EvadePlus
             Drawing.OnDraw += OnDraw;
         }
 
-        public void AddSkillshot(EvadeSkillshot skillshot, bool isProcessSpell = false, bool triggerEvent = true)
+        private void AddSkillshot(EvadeSkillshot skillshot, bool isProcessSpell = false, bool triggerEvent = true)
         {
             if (LimitDetectionRange && !skillshot.SpellData.IsGlobal &&
                 skillshot.GetPosition().Distance(Player.Instance, true) > (2*skillshot.SpellData.Range).Pow())
@@ -83,17 +83,15 @@ namespace YasuoBuddy.EvadePlus
 
             DetectedSkillshots.Add(skillshot);
 
-            if (triggerEvent && EvadeMenu.IsSkillshotEnabled(skillshot))
-            {
-                if (OnSkillshotDetected != null)
-                    OnSkillshotDetected(skillshot, isProcessSpell);
+            if (!triggerEvent || !EvadeMenu.IsSkillshotEnabled(skillshot)) return;
+            if (OnSkillshotDetected != null)
+                OnSkillshotDetected(skillshot, isProcessSpell);
 
-                if (OnUpdateSkillshots != null)
-                    OnUpdateSkillshots(skillshot, false, isProcessSpell);
-            }
+            if (OnUpdateSkillshots != null)
+                OnUpdateSkillshots(skillshot, false, isProcessSpell);
         }
 
-        public bool IsValidTeam(GameObjectTeam team)
+        private bool IsValidTeam(GameObjectTeam team)
         {
             if (team == GameObjectTeam.Unknown)
                 return true;
@@ -131,16 +129,13 @@ namespace YasuoBuddy.EvadePlus
 
             DetectedSkillshots.RemoveAll(v => !v.IsValid);
 
-            foreach (var c in DetectedSkillshots)
+            foreach (var c in DetectedSkillshots.Where(c => !c.IsActive && Environment.TickCount >= c.TimeDetected + SkillshotActivationDelay))
             {
-                if (!c.IsActive && Environment.TickCount >= c.TimeDetected + SkillshotActivationDelay)
-                {
-                    c.IsActive = true;
+                c.IsActive = true;
 
-                    if (OnSkillshotActivation != null)
-                    {
-                        OnSkillshotActivation(c);
-                    }
+                if (OnSkillshotActivation != null)
+                {
+                    OnSkillshotActivation(c);
                 }
             }
 
@@ -166,19 +161,17 @@ namespace YasuoBuddy.EvadePlus
                 SkillshotDatabase.Database.FirstOrDefault(
                     evadeSkillshot => evadeSkillshot.SpellData.SpellName == args.SData.Name);
 
-            if (skillshot != null && IsValidTeam(sender.Team))
-            {
-                var nSkillshot = skillshot.NewInstance();
-                nSkillshot.SkillshotDetector = this;
-                nSkillshot.Caster = sender;
-                nSkillshot.CastArgs = args;
-                nSkillshot.SData = args.SData;
-                nSkillshot.Team = sender.Team;
+            if (skillshot == null || !IsValidTeam(sender.Team)) return;
+            var nSkillshot = skillshot.NewInstance();
+            nSkillshot.SkillshotDetector = this;
+            nSkillshot.Caster = sender;
+            nSkillshot.CastArgs = args;
+            nSkillshot.SData = args.SData;
+            nSkillshot.Team = sender.Team;
 
-                nSkillshot.OnCreate(null);
-                nSkillshot.OnSpellDetection(sender, args);
-                AddSkillshot(nSkillshot, true);
-            }
+            nSkillshot.OnCreate(null);
+            nSkillshot.OnSpellDetection(sender, args);
+            AddSkillshot(nSkillshot, true);
         }
 
         private void GameObjectOnCreate(GameObject sender, EventArgs args)
@@ -235,11 +228,9 @@ namespace YasuoBuddy.EvadePlus
             //if (Utils.GetTeam(sender) == Utils.PlayerTeam())
             //    Chat.Print("delete {0} {1} {2} {3}", sender.Team, sender.GetType().ToString(), Utils.GetGameObjectName(sender), sender.Index);
 
-            foreach (
-                var c in DetectedSkillshots.Where(v => v.SpawnObject != null && v.SpawnObject.IndexEquals(sender)))
+            foreach (var c in DetectedSkillshots.Where(v => v.SpawnObject != null && v.SpawnObject.IndexEquals(sender)).Where(c => c.OnDelete(sender)))
             {
-                if (c.OnDelete(sender))
-                    c.IsValid = false;
+                c.IsValid = false;
             }
 
             foreach (var c in DetectedSkillshots)
@@ -253,15 +244,13 @@ namespace YasuoBuddy.EvadePlus
                 return;
             }
 
-            if (args.ForceStop || args.StopAnimation)
+            if (!args.ForceStop && !args.StopAnimation) return;
+            foreach (
+                var c in
+                    DetectedSkillshots.Where(
+                        v => v.SpawnObject == null && v.Caster != null && v.Caster.IndexEquals(sender)))
             {
-                foreach (
-                    var c in
-                        DetectedSkillshots.Where(
-                            v => v.SpawnObject == null && v.Caster != null && v.Caster.IndexEquals(sender)))
-                {
-                    c.IsValid = false;
-                }
+                c.IsValid = false;
             }
         }
 
@@ -272,9 +261,8 @@ namespace YasuoBuddy.EvadePlus
                 return;
             }
 
-            foreach (var c in DetectedSkillshots)
-                if (EvadeMenu.IsSkillshotDrawingEnabled(c))
-                    c.OnDraw();
+            foreach (var c in DetectedSkillshots.Where(c => EvadeMenu.IsSkillshotDrawingEnabled(c)))
+                c.OnDraw();
         }
     }
 

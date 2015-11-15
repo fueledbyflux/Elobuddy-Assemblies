@@ -21,12 +21,13 @@ namespace LeeSinBuddy
         public static Spell.Active E;
         public static Spell.Active E2;
         public static Spell.Targeted R;
-        public static Spell.Targeted R2;
-        public static string LastSpell;
+        private static Spell.Targeted R2;
+        private static string LastSpell;
         public static long LastSpellTime;
-        public static long PassiveTimer;
+        private static long PassiveTimer;
         public static int PassiveStacks;
-        public static Menu menu, DrawingMenu;
+        public static Menu menu;
+        private static Menu DrawingMenu;
 
         public static Dictionary<string, string> Spells = new Dictionary<string, string>
         {
@@ -57,16 +58,14 @@ namespace LeeSinBuddy
 
         private static void Main(string[] args)
         {
-            if (args != null)
+            if (args == null) return;
+            try
             {
-                try
-                {
-                    Loading.OnLoadingComplete += Load_OnLoad;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
+                Loading.OnLoadingComplete += Load_OnLoad;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
         }
 

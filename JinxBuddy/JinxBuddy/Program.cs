@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
-using EloBuddy.SDK.Constants;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
@@ -13,7 +11,7 @@ using SharpDX;
 
 namespace JinxBuddy
 {
-    internal class Program
+    internal static class Program
     {
         public static Spell.Active Q = new Spell.Active(SpellSlot.Q);
 
@@ -25,7 +23,12 @@ namespace JinxBuddy
         public static Spell.Skillshot E = new Spell.Skillshot(SpellSlot.E, 900, SkillShotType.Circular, 1200, 1750, 1);
         public static Spell.Skillshot R = new Spell.Skillshot(SpellSlot.R, 3000, SkillShotType.Linear, 600, 1700, 140);
 
-        public static Menu Menu, ComboMenu, HarassMenu, FarmMenu, MiscMenu, DrawMenu;
+        private static Menu Menu;
+        private static Menu ComboMenu;
+        private static Menu HarassMenu;
+        private static Menu FarmMenu;
+        public static Menu MiscMenu;
+        private static Menu DrawMenu;
 
         private static void Main(string[] args)
         {
@@ -114,22 +117,17 @@ namespace JinxBuddy
             if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LaneClear)) WaveClear();
             if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LastHit)) LastHit();
 
-            if (MiscMenu["CCE"].Cast<CheckBox>().CurrentValue)
+            if (!MiscMenu["CCE"].Cast<CheckBox>().CurrentValue) return;
+            foreach (var enemy in EntityManager.Heroes.Enemies.Where(enemy => enemy.Distance(Player.Instance) < E.Range &&
+                                                                              (enemy.HasBuffOfType(BuffType.Stun)
+                                                                               || enemy.HasBuffOfType(BuffType.Snare)
+                                                                               || enemy.HasBuffOfType(BuffType.Suppression))))
             {
-                foreach (var enemy in EntityManager.Heroes.Enemies)
-                {
-                    if (enemy.Distance(Player.Instance) < E.Range &&
-                        (enemy.HasBuffOfType(BuffType.Stun)
-                         || enemy.HasBuffOfType(BuffType.Snare)
-                         || enemy.HasBuffOfType(BuffType.Suppression)))
-                    {
-                        E.Cast(enemy);
-                    }
-                }
+                E.Cast(enemy);
             }
         }
 
-        public static void LastHit()
+        private static void LastHit()
         {
             if (FarmMenu["disableRocketsLH"].Cast<CheckBox>().CurrentValue && Events.FishBonesActive)
             {
@@ -137,7 +135,7 @@ namespace JinxBuddy
             }
         }
 
-        public static void WaveClear()
+        private static void WaveClear()
         {
             if (Orbwalker.IsAutoAttacking) return;
             if (FarmMenu["useQFarm"].Cast<CheckBox>().CurrentValue)
@@ -172,7 +170,7 @@ namespace JinxBuddy
             }
         }
 
-        public static void Harass()
+        private static void Harass()
         {
             var targetW = TargetSelector.SelectedTarget != null &&
                          TargetSelector.SelectedTarget.Distance(Player.Instance) < W.Range
@@ -199,50 +197,39 @@ namespace JinxBuddy
                 }
             }
 
-            if (target != null)
+            if (target == null) return;
+            if (!HarassMenu["useQHarass"].Cast<CheckBox>().CurrentValue) return;
+            // Aoe Logic
+            foreach (var enemy in EntityManager.Heroes.Enemies.Where(
+                a => a.IsValidTarget(Events.MinigunRange(a) + Events.FishBonesBonus))
+                .OrderBy(TargetSelector.GetPriority).Where(enemy => enemy.CountEnemiesInRange(150) > 1 && (enemy.NetworkId == target.NetworkId || enemy.Distance(target) < 150)))
             {
-
-                if (HarassMenu["useQHarass"].Cast<CheckBox>().CurrentValue)
+                if (!Events.FishBonesActive)
                 {
-                    // Aoe Logic
-                    foreach (
-                        var enemy in
-                            EntityManager.Heroes.Enemies.Where(
-                                a => a.IsValidTarget(Events.MinigunRange(a) + Events.FishBonesBonus))
-                                .OrderBy(TargetSelector.GetPriority))
-                    {
-                        if (enemy.CountEnemiesInRange(150) > 1 &&
-                            (enemy.NetworkId == target.NetworkId || enemy.Distance(target) < 150))
-                        {
-                            if (!Events.FishBonesActive)
-                            {
-                                Q.Cast();
-                            }
-                            Orbwalker.ForcedTarget = enemy;
-                            return;
-                        }
-                    }
+                    Q.Cast();
+                }
+                Orbwalker.ForcedTarget = enemy;
+                return;
+            }
 
-                    // Regular Q Logic
-                    if (Events.FishBonesActive)
-                    {
-                        if (target.Distance(Player.Instance) <= Player.Instance.GetAutoAttackRange(target) - Events.FishBonesBonus)
-                        {
-                            Q.Cast();
-                        }
-                    }
-                    else
-                    {
-                        if (target.Distance(Player.Instance) > Player.Instance.GetAutoAttackRange(target))
-                        {
-                            Q.Cast();
-                        }
-                    }
+            // Regular Q Logic
+            if (Events.FishBonesActive)
+            {
+                if (target.Distance(Player.Instance) <= Player.Instance.GetAutoAttackRange(target) - Events.FishBonesBonus)
+                {
+                    Q.Cast();
+                }
+            }
+            else
+            {
+                if (target.Distance(Player.Instance) > Player.Instance.GetAutoAttackRange(target))
+                {
+                    Q.Cast();
                 }
             }
         }
 
-        public static void Combo()
+        private static void Combo()
         {
 
             var targetW = TargetSelector.SelectedTarget != null &&

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu;
@@ -10,7 +7,7 @@ using EloBuddy.SDK.Menu.Values;
 
 namespace YasuoBuddy.TargetedSpells
 {
-    class SpellDetectorWindwaller
+    internal static class SpellDetectorWindwaller
     {
         private static Menu _targetedMenu;
         public static void Init()
@@ -41,15 +38,14 @@ namespace YasuoBuddy.TargetedSpells
         {
             if (sender.IsAlly || !(sender is AIHeroClient) || args.Target == null || !args.Target.IsMe || Player.GetSpell(SpellSlot.W).State != SpellState.Ready) return;
             var spell = TargetSpellDatabase.GetByName(args.SData.Name);
-            if (spell != null && _targetedMenu[spell.Name + "/eyas"] != null && _targetedMenu[spell.Name + "/eyas"].Cast<CheckBox>().CurrentValue)
+            if (spell == null || _targetedMenu[spell.Name + "/eyas"] == null ||
+                !_targetedMenu[spell.Name + "/eyas"].Cast<CheckBox>().CurrentValue) return;
+            if (spell.Delay == 0)
             {
-                if (spell.Delay == 0)
-                {
-                    Player.CastSpell(SpellSlot.W, sender.Position);
-                    return;
-                }
-                Core.DelayAction(() => Player.CastSpell(SpellSlot.W, sender.Position), spell.Delay);
+                Player.CastSpell(SpellSlot.W, sender.Position);
+                return;
             }
+            Core.DelayAction(() => Player.CastSpell(SpellSlot.W, sender.Position), spell.Delay);
         }
     }
 }

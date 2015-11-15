@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using EloBuddy;
+﻿using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Rendering;
 using SharpDX;
@@ -8,9 +6,9 @@ using Color = System.Drawing.Color;
 
 namespace VayneBuddy
 {
-    class WallQ
+    internal static class WallQ
     {
-        public static AIHeroClient _Player
+        private static AIHeroClient _Player
         {
             get { return ObjectManager.Player; }
         }
@@ -19,12 +17,12 @@ namespace VayneBuddy
         public static void Drawing_OnDraw()
         {
             if (Game.MapId != GameMapId.SummonersRift) return;
-            Vector2 drakeWallQPos = new Vector2(12050, 4827);
-            Vector2 midWallQPos = new Vector2(6962, 8952);
+            var drakeWallQPos = new Vector2(12050, 4827);
+            var midWallQPos = new Vector2(6962, 8952);
             if (drakeWallQPos.Distance(_Player) < 3000)
-                new Circle() { Color = _Player.Distance(drakeWallQPos) <= 100 ? Color.DodgerBlue : Color.White, Radius = 100 }.Draw(drakeWallQPos.To3D());
+                new Circle { Color = _Player.Distance(drakeWallQPos) <= 100 ? Color.DodgerBlue : Color.White, Radius = 100 }.Draw(drakeWallQPos.To3D());
             if (midWallQPos.Distance(_Player) < 3000)
-                new Circle() { Color = _Player.Distance(midWallQPos) <= 100 ? Color.DodgerBlue : Color.White,  Radius = 100 }.Draw(midWallQPos.To3D());
+                new Circle { Color = _Player.Distance(midWallQPos) <= 100 ? Color.DodgerBlue : Color.White,  Radius = 100 }.Draw(midWallQPos.To3D());
 
         }
 
@@ -38,8 +36,8 @@ namespace VayneBuddy
             }
             Orbwalker.DisableMovement = true;
 
-            Vector2 drakeWallQPos = new Vector2(11514, 4462);
-            Vector2 midWallQPos = new Vector2(6667, 8794);
+            var drakeWallQPos = new Vector2(11514, 4462);
+            var midWallQPos = new Vector2(6667, 8794);
 
             var selectedPos = drakeWallQPos.Distance(_Player) < midWallQPos.Distance(_Player) ? drakeWallQPos :  midWallQPos;
             var walkPos = drakeWallQPos.Distance(_Player) < midWallQPos.Distance(_Player)

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -10,7 +7,7 @@ using EloBuddy.SDK.Menu.Values;
 
 namespace EliseBuddy
 {
-    class StateManager
+    internal static class StateManager
     {
         //soontm
         //Cocoon big minions with E, Deal AoE dmg to all with W in spider form and last hit minions with the priority towards the big ones with Q in spider form, also poison big ones at the beginning with Q in human form and always use W in human form if available

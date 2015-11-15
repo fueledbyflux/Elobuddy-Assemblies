@@ -27,11 +27,7 @@ namespace YasuoBuddy
         public static Color GetColour(this Menu m, string id)
         {
             var number = m[id].Cast<Slider>();
-            if (number != null)
-            {
-                return Colours[number.CurrentValue];
-            }
-            return Color.AliceBlue;
+            return number != null ? Colours[number.CurrentValue] : Color.AliceBlue;
         }
     }
 }

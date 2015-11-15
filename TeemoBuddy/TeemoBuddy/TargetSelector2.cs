@@ -7,7 +7,7 @@ using SharpDX;
 
 namespace TeemoBuddy
 {
-    public class TargetSelector2
+    public static class TargetSelector2
     {
             public static void init()
             {
@@ -40,16 +40,14 @@ namespace TeemoBuddy
             private static void Game_OnWndProc(WndEventArgs args)
             {
                 if (args.Msg != 0x202) return;
-                if (_lastClick + 500 <= Environment.TickCount)
+                if (_lastClick + 500 > Environment.TickCount) return;
+                _target =
+                    ObjectManager.Get<AIHeroClient>()
+                        .OrderBy(a => a.Distance(ObjectManager.Player))
+                        .FirstOrDefault(a => a.IsEnemy && a.Distance(Game.CursorPos) < 200);
+                if (_target != null)
                 {
-                    _target =
-                        ObjectManager.Get<AIHeroClient>()
-                            .OrderBy(a => a.Distance(ObjectManager.Player))
-                            .FirstOrDefault(a => a.IsEnemy && a.Distance(Game.CursorPos) < 200);
-                    if (_target != null)
-                    {
-                        _lastClick = Environment.TickCount;
-                    }
+                    _lastClick = Environment.TickCount;
                 }
             }
         }

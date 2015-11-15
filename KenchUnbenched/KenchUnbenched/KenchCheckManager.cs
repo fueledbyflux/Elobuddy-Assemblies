@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EloBuddy;
 
 namespace KenchUnbenched
 {
-    static class KenchCheckManager
+    internal static class KenchCheckManager
     {
 
         // W Stuff
-        public static int[] WSpellDelay = new[] { 4000, 4500, 5000, 5500, 6000 };
-        public static int WExpire;
+        private static int[] WSpellDelay = { 4000, 4500, 5000, 5500, 6000 };
+        private static int WExpire;
         public static Obj_AI_Base WTarget;
 
 
@@ -38,11 +34,9 @@ namespace KenchUnbenched
                 }
             }
 
-            if (args.Slot == SpellSlot.W && IsSwallowed())
-            {
-                WExpire = Environment.TickCount - 1;
-                WTarget = null;
-            }
+            if (args.Slot != SpellSlot.W || !IsSwallowed()) return;
+            WExpire = Environment.TickCount - 1;
+            WTarget = null;
         }
 
         public static bool IsEmpowered(this AIHeroClient target)
@@ -52,12 +46,9 @@ namespace KenchUnbenched
 
         public static bool IsSwallowed()
         {
-            if (Player.Instance.IsDead || WExpire < Environment.TickCount)
-            {
-                WTarget = null;
-                return false;
-            }
-            return true;
+            if (!Player.Instance.IsDead && WExpire >= Environment.TickCount) return true;
+            WTarget = null;
+            return false;
         }
     }
 }

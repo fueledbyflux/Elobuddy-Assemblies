@@ -9,9 +9,9 @@ using SharpDX;
 
 namespace LeeSinBuddy
 {
-    class Smiter
+    internal static class Smiter
     {
-        public static readonly string[] SmiteableUnits =
+        private static readonly string[] SmiteableUnits =
         {
             "SRU_Red", "SRU_Blue", "SRU_Dragon", "SRU_Baron"
         };
@@ -40,7 +40,7 @@ namespace LeeSinBuddy
             {
                 return 0;
             }
-            int level = ObjectManager.Player.Level;
+            var level = ObjectManager.Player.Level;
             int[] smitedamage =
             {
                 20*level + 370,
@@ -82,7 +82,7 @@ namespace LeeSinBuddy
             }
         }
 
-        public static bool ForceSmite;
+        private static bool ForceSmite;
 
         private static void Game_OnUpdate(EventArgs args)
         {

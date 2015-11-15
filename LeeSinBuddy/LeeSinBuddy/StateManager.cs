@@ -8,15 +8,20 @@ using EloBuddy.SDK.Menu.Values;
 
 namespace LeeSinBuddy
 {
-    internal class StateManager
+    internal static class StateManager
     {
-        public static Menu ComboMenu, HarassMenu, FarmMenu, JungleMenu, KillstealMenu;
-        public static AIHeroClient _Player
+        private static Menu ComboMenu;
+        private static Menu HarassMenu;
+        private static Menu FarmMenu;
+        private static Menu JungleMenu;
+        private static Menu KillstealMenu;
+
+        private static AIHeroClient _Player
         {
             get { return ObjectManager.Player; }
         }
 
-        public static bool CastQAgain
+        private static bool CastQAgain
         {
             get { return Program.LastCast[Program.Spells["Q1"]] + 2900 <= Environment.TickCount; }
         }
@@ -97,7 +102,7 @@ namespace LeeSinBuddy
             if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LaneClear)) WaveClear();
         }
 
-        public static void LastHit()
+        private static void LastHit()
         {
             var minions = EntityManager.MinionsAndMonsters.EnemyMinions.Where(a => a.Distance(Player.Instance) < 1400).OrderBy(a => a.Health);
             var minion =
@@ -118,7 +123,7 @@ namespace LeeSinBuddy
             }
         }
 
-        public static void WaveClear()
+        private static void WaveClear()
         {
             var minions = EntityManager.MinionsAndMonsters.EnemyMinions.Where(a => a.Distance(Player.Instance) < 1400).OrderBy(a => a.Health);
             var minion = (Extended.BuffedEnemy != null && Extended.BuffedEnemy.IsValidTarget(1400)) ? Extended.BuffedEnemy : minions.FirstOrDefault();
@@ -140,15 +145,16 @@ namespace LeeSinBuddy
                 Program.E.Cast();
                 Program.LastSpellTime = Environment.TickCount;
             }
-            
-            if (FarmMenu["useQ1WC"].Cast<CheckBox>().CurrentValue && (Damage.QDamage(minion) > minion.Health || Damage.QDamage(minion) + Damage.Q2Damage(minion, (float)Damage.QDamage(minion)) > minion.Health) && Program.Q.IsReady())
-            {
-                Program.Q.Cast(minion);
-                Program.LastSpellTime = Environment.TickCount;
-            }
+
+            if (!FarmMenu["useQ1WC"].Cast<CheckBox>().CurrentValue ||
+                (!(Damage.QDamage(minion) > minion.Health) &&
+                 !(Damage.QDamage(minion) + Damage.Q2Damage(minion, (float) Damage.QDamage(minion)) > minion.Health)) ||
+                !Program.Q.IsReady()) return;
+            Program.Q.Cast(minion);
+            Program.LastSpellTime = Environment.TickCount;
         }
 
-        public static void Jungle()
+        private static void Jungle()
         {
             var source = EntityManager.MinionsAndMonsters.GetJungleMonsters().OrderByDescending(a => a.MaxHealth).FirstOrDefault(b => b.Distance(Player.Instance) < 1300);
             if (source == null || !source.IsValidTarget()) return;
@@ -208,12 +214,10 @@ namespace LeeSinBuddy
                 return;
             }
 
-            if (JungleMenu["useE1J"].Cast<CheckBox>().CurrentValue && Program.E.IsReady()
-                && Program.E.Instance().Name == Program.Spells["E1"] && source.Distance(_Player) < 430)
-            {
-                Program.E.Cast();
-                Program.LastSpellTime = Environment.TickCount;
-            }
+            if (!JungleMenu["useE1J"].Cast<CheckBox>().CurrentValue || !Program.E.IsReady() ||
+                Program.E.Instance().Name != Program.Spells["E1"] || !(source.Distance(_Player) < 430)) return;
+            Program.E.Cast();
+            Program.LastSpellTime = Environment.TickCount;
         }
 
         public static void Combo()
@@ -301,23 +305,22 @@ namespace LeeSinBuddy
                 Program.LastSpellTime = Environment.TickCount;
 
             }
-            if (ComboMenu["wCatchUp"].Cast<CheckBox>().CurrentValue && target.Distance(_Player) > 430 && Program.W.IsReady()
-                && Program.W.Instance().Name == Program.Spells["W1"] && Program.LastSpellTime + 200 < Environment.TickCount)
+            if (!ComboMenu["wCatchUp"].Cast<CheckBox>().CurrentValue || !(target.Distance(_Player) > 430) ||
+                !Program.W.IsReady() || Program.W.Instance().Name != Program.Spells["W1"] ||
+                Program.LastSpellTime + 200 >= Environment.TickCount) return;
             {
                 var unit =
-                       ObjectManager
-                           .Get<Obj_AI_Base>(
-                               ).FirstOrDefault(a => a.Distance(target) < Player.Instance.GetAutoAttackRange(target) && a.IsAlly &&
-                                   a.Distance(target) < Player.Instance.Distance(target) && a.Distance(Player.Instance) < Program.W.Range);
-                if (unit != null)
-                {
-                    Player.CastSpell(SpellSlot.W, unit);
-                    Program.LastSpellTime = Environment.TickCount;
-                }
+                    ObjectManager
+                        .Get<Obj_AI_Base>(
+                        ).FirstOrDefault(a => a.Distance(target) < Player.Instance.GetAutoAttackRange(target) && a.IsAlly &&
+                                              a.Distance(target) < Player.Instance.Distance(target) && a.Distance(Player.Instance) < Program.W.Range);
+                if (unit == null) return;
+                Player.CastSpell(SpellSlot.W, unit);
+                Program.LastSpellTime = Environment.TickCount;
             }
         }
 
-        public static void Harass()
+        private static void Harass()
         {
             var target = TargetSelector.GetTarget(1300, DamageType.Physical);
             if (target == null || !target.IsValidTarget())
